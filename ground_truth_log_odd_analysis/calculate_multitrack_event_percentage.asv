@@ -1,0 +1,46 @@
+function [multi_event_percent multi_event_number] = calculate_multitrack_event_percentage(session_index,event_index,track_1_index,track_2_index,epoch)
+
+if option == 2 % If RUN, track 1 event 
+    for session = 1:length(session_index)
+        multitrack_event(1,session) = sum(ismember(event_index(track_1_index(ismember(track_1_index,session_index{session}))),...
+            event_index));
+    end
+
+    for session = 1:length(session_index)
+        multitrack_event(1,session) = sum(ismember(event_index(track_1_index(ismember(track_1_index,session_index{session}))),...
+            event_index(track_2_index(ismember(track_2_index,session_index{session})))));
+    end
+
+    multi_event_number = sum(multitrack_event);
+    multi_event_percent = sum(multitrack_event)...
+        /(length(track_1_index)+length(track_2_index));
+
+else
+    for session = 1:length(session_index)
+        multitrack_event(session) = sum(ismember(event_index(track_1_index(ismember(track_1_index,session_index{session}))),...
+            event_index(track_2_index(ismember(track_2_index,session_index{session})))));
+    end
+
+    multi_event_number = sum(multitrack_event);
+    multi_event_percent = sum(multitrack_event)...
+        /(length(track_1_index)+length(track_2_index));
+
+end
+end
+%
+% for session = 1:10
+%     multitrack_event(session) = sum(ismember(event_index{nmethod}{nshuffle}(track_1_index(ismember(track_1_index,session_index{nmethod}{nshuffle}{session}))),...
+%         event_index{nmethod}{nshuffle}(track_2_index(ismember(track_2_index,session_index{nmethod}{nshuffle}{session})))));
+%     
+%     A = event_index{nmethod}{nshuffle}(session_index{nmethod}{nshuffle}{session})
+%     edges = min(A) : max(A)
+%      [counts, values] = histcounts(A,edges)
+%      repeatedElements{session} = values(counts >= 2)
+% %      histcounts
+% 
+%     track1{session} = event_index{nmethod}{nshuffle}(track_1_index(ismember(track_1_index,session_index{nmethod}{nshuffle}{session})));
+%     track2{session} = event_index{nmethod}{nshuffle}(track_2_index(ismember(track_2_index,session_index{nmethod}{nshuffle}{session})));
+%     sss(session) = length(track1{session}) + length(track2{session})
+% end
+% 
+% sum(sss)

@@ -1,0 +1,156 @@
+function [] = plot_ground_truth_compare_two_shuffles(folders,option,method)
+
+total_number(1:3) = 0;
+for nfolder = 1:length(folders)
+    
+    cd(folders{nfolder})
+    load decoded_replay_events
+    
+    [~,time_range]=sort_replay_events([],'wcorr');
+    
+    for event = 1:length(decoded_replay_events(1).replay_events)
+        
+        event_time = decoded_replay_events(1).replay_events(event).timebins_edges(1);
+        
+        if event_time <= time_range.pre(2) %If PRE
+            
+            total_number(1) = total_number(1) + 1;
+            
+        elseif event_time >= time_range.post(1) %If POST
+            
+            total_number(3) = total_number(3) + 1;
+            
+        elseif event_time >= time_range.track(1).behaviour(1) & event_time <= time_range.track(1).behaviour(2)
+            total_number(2) = total_number(2) + 1;
+        elseif event_time >= time_range.track(2).behaviour(1) & event_time <= time_range.track(2).behaviour(2)
+            total_number(2) = total_number(2) + 1;
+            
+            
+        end
+    end
+    cd ..
+end
+
+no_of_shuffles = 2
+index = [];
+epoch_index = [];
+
+for nmethod = 1:4
+    
+     cd ground_truth_original
+    if strcmp(method{nmethod},'wcorr')
+            load log_odd_wcorr_two_shuffles
+    elseif strcmp(method{nmethod},'spearman')
+        load log_odd_spearman_two_shuffles
+    elseif strcmp(method{nmethod},'linear')
+        load log_odd_linear_two_shuffles
+    elseif strcmp(method{nmethod},'path')
+        load log_odd_path_two_shuffles
+    end
+    cd ..
+    
+    % Get index for PRE,  RUN, POST
+    % states = [-1 0 1 2 3 4 5]; % sleepPRE, awakePRE, RUN T1, RUN T2, sleepPOST and awakePOST and multi-track
+    % states = [-1 0 1 2 3 4]; % sleepPRE, awakePRE, RUN T1, RUN T2, sleepPOST and awakePOST
+    states = [-1 0 1 2];
+
+    
+    for k=1:length(states) % sort track id and behavioral states (pooled from 5 sessions)
+        state_index = find(log_odd.behavioural_state==states(k));
+        
+        if k == 1 % PRE
+            epoch_index{nmethod}{1}{1} = intersect(state_index,find(log_odd.track==1));
+            epoch_index{nmethod}{1}{2} = intersect(state_index,find(log_odd.track==2));
+        elseif k == 2 % POST
+            epoch_index{nmethod}{3}{1} = intersect(state_index,find(log_odd.track==1));
+            epoch_index{nmethod}{3}{2} = intersect(state_index,find(log_odd.track==2));
+        elseif k == 3 % RUN Track 1
+            epoch_index{nmethod}{2}{1} = intersect(state_index,find(log_odd.track==1)); % Track 1 replay on Track 1 considered RUN Replay
+        elseif k == 4 % RUN Track 2
+            epoch_index{nmethod}{2}{2} = intersect(state_index,find(log_odd.track==2));
+        end
+    end
+    
+
+    for epoch = 1:3
+%         tempt1 = datasample(epoch_index{epoch}{1},1000);
+%         tempt2 = datasample(epoch_index{epoch}{2},1000);
+            index{nmethod}{epoch} = [epoch_index{nmethod}{epoch}{1} epoch_index{nmethod}{epoch}{2}]
+%         index{nmethod}{epoch} = [ tempt1 tempt2 ]
+    end
+    
+    
+    % index = epoch_index;
+    
+    if strcmp(option,'original')
+        data{nmethod} = log_odd.normal_zscored.original(2,:);
+    elseif strcmp(option,'common')
+        data{nmethod} = log_odd.common_zscored.original(2,:);
+    elseif strcmp(option,'global remapped')
+        data{nmethod} = log_odd.comon_zscored.global_remapped_original(2,:);
+    end
+
+    
+    
+    log_pval{nmethod} = log_odd.pvalue;
+    colour_line= {'b','r','g','k'};
+    %     colour_line2 = {'k--','b--','r--','g--'};
+    colour_symbol={'bo','ro','go','ko'};
+    Behavioural_epoches = {'PRE','RUN','POST','Multi'};
+end    
+
+fig = figure(1)
+fig.Position = [834 116 850 700];
+
+%     text1 = sprintf('%s',method)
+sgtitle('Ground Truth Method Comparision (two shuffles)');
+p_val_threshold = flip([-3:0.1:-1.3]);
+alpha_level = linspace(0.01,1,length(p_val_threshold));
+
+for epoch = 1:3
+    subplot(2,2,epoch)
+
+    for nmethod = 1:length(method)
+        for threshold = 1:length(p_val_threshold)
+            % find the event index with p value lower than the threshold
+            current_index = find(log_pval{nmethod}(index{nmethod}{epoch})< p_val_threshold(threshold));
+            track_1_index = find(log_pval{nmethod}(epoch_index{nmethod}{epoch}{1})< p_val_threshold(threshold));
+            track_2_index = find(log_pval{nmethod}(epoch_index{nmethod}{epoch}{2})< p_val_threshold(threshold));
+
+            % Original
+            log_odd_difference{nmethod}{epoch}(threshold) = mean(data{nmethod}(epoch_index{nmethod}{epoch}{1}(track_1_index))) ...
+                - mean(data{nmethod}(epoch_index{nmethod}{epoch}{2}(track_2_index)));
+            
+            percent_sig_events{nmethod}{epoch}(threshold) = length(current_index)/total_number(epoch);
+
+            sc(nmethod) = scatter(log_odd_difference{nmethod}{epoch}(threshold),percent_sig_events{nmethod}{epoch}(threshold),colour_line{nmethod},'filled','MarkerFaceAlpha',alpha_level(threshold))
+            hold on
+
+        end
+
+
+        xlabel('Mean log odd difference')
+        ylabel('Proportion of all replay events')
+        %     lgd.FontSize = 12;
+        %
+    end
+
+    ylim([0 0.4])
+    legend([sc(1),sc(2),sc(3),sc(4)], {'wcorr','spearman','linear','path'})
+    %     legend([sc(1),sc(2),sc(3)], {'wcorr','spearman','path'})
+    %     legend([sc(1),sc(2),sc(3)], {'wcorr','spearman','linear'})
+    title(Behavioural_epoches{epoch});
+
+end
+
+cd ground_truth_original\Figure
+filename = sprintf('Four methods (%s, two shuffles) ground truth comparisions.pdf',option)
+saveas(gcf,filename)
+% filename = sprintf('%s (%s) ground truth plot.pdf',method,option)
+% saveas(gcf,filename)
+cd ..
+cd ..
+
+clf(fig)
+end
+

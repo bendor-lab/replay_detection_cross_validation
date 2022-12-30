@@ -1,0 +1,11 @@
+                tic
+                out = calculate_replay_detection_performance(data{nmethod}{nshuffle},epoch_index{nmethod}{nshuffle}{epoch},segment_id{nmethod}{nshuffle},...
+                    log_pval{nmethod}{nshuffle},p_val_threshold,session_index{nmethod}{nshuffle},event_index{nmethod}{nshuffle},total_number(epoch));
+                toc
+
+                log_odd_difference{nmethod}{nshuffle}{epoch} = out.log_odd_difference;
+                log_odd_difference_CI{nmethod}{nshuffle}{epoch} = out.log_odd_difference_CI;
+                percent_sig_events{nmethod}{nshuffle}{epoch} = out.percent_sig_events;
+                percent_sig_events_CI{nmethod}{nshuffle}{epoch} = out.percent_sig_events_CI;
+                percent_multi_events{nmethod}{nshuffle}{epoch} = out.percent_multi_events;
+                percent_multi_events_CI{nmethod}{nshuffle}{epoch} = out.percent_multi_events_CI;
