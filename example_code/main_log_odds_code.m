@@ -47,11 +47,12 @@ random_id2 = random_id(1+length(random_id)/2:end);
 log_odds_diff_random = nanmean(zscored_log_odds(random_id1))...
     - nanmean(zscored_log_odds(random_id2));
 
+
 fig = figure;
 fig.Position = [1100 145 560 810]
 bar([log_odds_diff log_odds_diff_random])
 xticklabels({'Based on ground truth','Randomly selected events'})
-ylabel('Mean ')
+ylabel('Mean log odds difference')
 xtickangle(45)
 ax = gca;
 ax.FontSize = 12;
@@ -59,4 +60,3 @@ set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
 title({'Comparision between mean log odds difference' ...
     ' between Track 1 sequence and Track 2 sequence' ...
     'when selected based on ground truth or randomly selected'})
-
