@@ -40,11 +40,11 @@ for nfolder = 1:length(folders) % Get total number of replay events
                 total_number{nshuffle}(3) = total_number{nshuffle}(3) + 1*number_of_global_remapped_shuffles;
                 session_total_number{nshuffle}(nfolder,3) = session_total_number{nshuffle}(nfolder,3) + 1*number_of_global_remapped_shuffles;
 
-            elseif event_time >= time_range.track(1).behaviour(1) & event_time <= time_range.track(1).behaviour(2)
+            elseif event_time >= time_range.track(1).behaviour(1) & event_time <= time_range.track(1).behaviour(2) % If RUN Track 1
                 total_number{nshuffle}(2) = total_number{nshuffle}(2) + 1*number_of_global_remapped_shuffles;
                 session_total_number{nshuffle}(nfolder,2) = session_total_number{nshuffle}(nfolder,2) + 1*number_of_global_remapped_shuffles;
 
-            elseif event_time >= time_range.track(2).behaviour(1) & event_time <= time_range.track(2).behaviour(2)
+            elseif event_time >= time_range.track(2).behaviour(1) & event_time <= time_range.track(2).behaviour(2) % If RUN Track 2
                 total_number{nshuffle}(2) = total_number{nshuffle}(2) + 1*number_of_global_remapped_shuffles;
                 session_total_number{nshuffle}(nfolder,2) = session_total_number{nshuffle}(nfolder,2) + 1*number_of_global_remapped_shuffles;
 
@@ -110,9 +110,7 @@ for nmethod = 1:length(method)
     cd ..
 
     % Get index for PRE,  RUN, POST
-    % states = [-1 0 1 2 3 4 5]; % sleepPRE, awakePRE, RUN T1, RUN T2, sleepPOST and awakePOST and multi-track
-    % states = [-1 0 1 2 3 4]; % sleepPRE, awakePRE, RUN T1, RUN T2, sleepPOST and awakePOST
-    states = [-1 0 1 2];
+    states = [-1 0 1 2]; % PRE, POST, RUN Track 1, RUN Track 2
     
     for nshuffle = 1:2
         for k=1:length(states) % sort track id and behavioral states (pooled from 5 sessions)
@@ -130,6 +128,12 @@ for nmethod = 1:length(method)
             end
         end
     end
+
+    % Grab all the essential information including:
+    % p value
+    % segment with best p value for a given track (whole event, first half or second half)
+    % maximum jump distance
+    % replay score (e.g. weighted correlation score)
 
     if strcmp(option,'common')
         data{nmethod}{1} = log_odd_compare{nmethod}{1}.common_zscored.original;
@@ -223,6 +227,82 @@ if exist('log_odd_difference_optimisation.mat', 'file') ~= 2
         percent_shuffle_events_CI1{2}{epoch} = percent_shuffle_events_CI{3}{epoch}(71:end,:);
     end
     
+    % putative analysis of p value distribution
+    for nmethod = 6
+        for epoch = 1:3
+            %                     % Resample canditate events with replacement
+            %                     resampled_event = datasample(s,epoch_index{nmethod}{nshuffle}{epoch},length(epoch_index{nmethod}{nshuffle}{epoch}));
+            %                     resampled_event_p_value = log_pval{nmethod}{nshuffle}(1,resampled_event);
+            %
+            figure(nmethod)
+            sgtitle('Track 1')
+            subplot(2,2,epoch)
+            % Actual data
+            event_p_value1 = log_pval{nmethod}{1}(1,epoch_index{nmethod}{1}{epoch});
+           
+           q_values = (1:length(event_p_value1))/length(event_p_value1)   * 0.05; % calculate critical values
+
+            [sorted_p, sort_idx] = sort(event_p_value1); % sort p-values in ascending order
+            significant_events = find(sorted_p <= sorted_q, 1, 'last'); % find last significant event
+            % Reject all candidate events with p-values less than or equal to the q-value
+            if ~isempty(significant_events)
+                significant_idx = sort_idx(1:significant_events);
+                event_p_value1(significant_events)
+                % do something with significant events
+            else
+                % no significant events found
+            end
+
+             histogram(event_p_value1,0:0.02:1,'Normalization','probability','EdgeAlpha',0.1)
+            hold on
+            % cell-id shuffled data
+            event_p_value2 = sort(log_pval{nmethod}{2}(1,epoch_index{nmethod}{2}{epoch}));
+            histogram(event_p_value2,0:0.02:1,'Normalization','probability','EdgeAlpha',0.1)
+            legend('Actual data','cell-id shuffled data')
+            title(Behavioural_epoches{epoch})
+            
+            figure(length(log_pval)*2+nmethod)
+            sgtitle('Track 1')
+            subplot(2,2,epoch)
+            [fdr,q,priori] = mafdr(event_p_value1,'Showplot',false)
+%             plot(event_p_value1,q);
+            plot(1:length(event_p_value1),event_p_value1);
+            hold on
+            [fdr,q,priori] = mafdr(event_p_value2,'Showplot',false)
+%             plot(event_p_value2,q);
+            s = RandStream('mrg32k3a','Seed',1); % Set random seed for resampling
+            resampled_event = sort(datasample(s,event_p_value2,length(event_p_value1)));
+            plot(1:length(resampled_event),resampled_event);
+
+            figure(length(log_pval) + nmethod)
+            sgtitle('Track 2')
+            subplot(2,2,epoch)
+            % Actual data
+            event_p_value1 = sort(log_pval{nmethod}{1}(2,epoch_index{nmethod}{1}{epoch}));
+             histogram(event_p_value1,0:0.02:1,'Normalization','probability','EdgeAlpha',0.1)
+            hold on
+            % cell-id shuffled data
+            event_p_value2 = sort(log_pval{nmethod}{2}(2,epoch_index{nmethod}{2}{epoch}));
+             histogram(event_p_value2,0:0.02:1,'Normalization','probability','EdgeAlpha',0.1)
+            legend('Actual data','cell-id shuffled data')
+            title(Behavioural_epoches{epoch})
+            
+            figure(length(log_pval)*3+nmethod)
+            sgtitle('Track 2')
+            subplot(2,2,epoch)
+            [fdr,q,priori] = mafdr(event_p_value1,'Showplot',false)
+%             plot(event_p_value1,q);
+            plot(1:length(event_p_value1),event_p_value1);
+            hold on
+            [fdr,q,priori] = mafdr(event_p_value2,'Showplot',false)
+            %             plot(event_p_value2,q);
+            s = RandStream('mrg32k3a','Seed',1); % Set random seed for resampling
+            resampled_event = sort(datasample(s,event_p_value2,length(event_p_value1)));
+            plot(1:length(resampled_event),resampled_event);
+     
+        end
+    end
+
     for nmethod = 5:length(method)
         for epoch = 1:3
             for nshuffle = 1:length(log_pval{nmethod})
@@ -230,34 +310,48 @@ if exist('log_odd_difference_optimisation.mat', 'file') ~= 2
                 
                 parfor threshold = 1:length(p_val_threshold)
                     for nboot = 1:1000 % Bootstrapping 1000 times
-                        s = RandStream('mrg32k3a','Seed',nboot);
-                        
+                        s = RandStream('mrg32k3a','Seed',nboot); % Set random seed for resampling
+
+                        % Resample canditate events with replacement
                         resampled_event = datasample(s,epoch_index{nmethod}{nshuffle}{epoch},length(epoch_index{nmethod}{nshuffle}{epoch}));
-%                         resampled_event = datasample(epoch_index{nmethod}{nshuffle}{epoch},length(epoch_index{nmethod}{nshuffle}{epoch}));
                         
-                        %     for track = 1:2
+                        % Detecting events significant for track 1
+                        % Find significant 'WHOLE' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) == 1));
                         track_1_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)));
+                        % Find significant 'half' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) > 1));
-                        track_1_index = [track_1_index this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)/2))];
-                        
+                        track_1_index = [track_1_index this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)/2))];% p value divide by two to account for multiple comparision
+
+                        % Detecting events significant for track 2
+                        % Find significant 'WHOLE' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) == 1));
                         track_2_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)));
+                        % Find significant 'half' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) > 1));
-                        track_2_index = [track_2_index this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)/2))];
-                        
+                        track_2_index = [track_2_index this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)/2))];% p value divide by two to account for multiple comparision
+
+
+                        % Calculate mean replay score for all significant
+                        % events
                         boot_replay_score(threshold,nboot) = mean([replay_score{nmethod}{nshuffle}(1,track_1_index) replay_score{nmethod}{nshuffle}(2,track_2_index)]);
 
+                        % Calculate percentage of tracks significant for
+                        % both tracks
                         multi_event_number = sum(ismember(track_1_index,track_2_index));
                         multi_event_percent = multi_event_number/(length(track_1_index)+length(track_2_index)-multi_event_number);
                         
+                        % Calculate mean z-scored log odds difference for all significant
+                        % events (Track 1 - Track 2)
                         boot_log_odd_difference(threshold,nboot) = mean(data{nmethod}{nshuffle}(1,track_1_index)) ...
                             - mean(data{nmethod}{nshuffle}(2,track_2_index));
                         
+
                         boot_percent_multi_events(threshold,nboot) = multi_event_percent;
-                        
+
                         % Significant event proportion (minus multitrack event number to avoid double counting)
                         boot_percent_sig_events(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
+
                         if nshuffle == 2
                             % cell id shuffled mean significant event proportion
                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
@@ -315,18 +409,23 @@ if exist('log_odd_difference_optimisation_original.mat', 'file') ~= 2
                 %                 multi_event_index = find(log_odd_compare{nshuffle}.multi_track == 1);
                 tic
                 for threshold = 1:length(p_val_threshold)
+                    % original event index
                     resampled_event = epoch_index{nmethod}{nshuffle}{epoch};
                     %                     resampled_event = datasample(epoch_index{nmethod}{nshuffle}{epoch},length(epoch_index{nmethod}{nshuffle}{epoch}));
-                    
-                    %     for track = 1:2
+
+                    % Detecting events significant for track 1
+                    % Find significant 'WHOLE' event
                     this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) == 1));
                     track_1_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)));
+                    % Find significant half event
                     this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) > 1));
                     track_1_index = [track_1_index this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)/2))];
-                    
-                    
+
+                    % Detecting events significant for track 2
+                    % Find significant 'WHOLE' event
                     this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) == 1));
                     track_2_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)));
+                    % Find significant half event
                     this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) > 1));
                     track_2_index = [track_2_index this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)/2))];
 
@@ -335,18 +434,24 @@ if exist('log_odd_difference_optimisation_original.mat', 'file') ~= 2
                         track_2_index = track_2_index(find(max_jump{nmethod}{nshuffle}(2,track_2_index) <= 20*0.4));
                     end
                     
+                    % Calculate mean replay score across all significant
+                    % events
                     boot_replay_score(threshold) = mean([replay_score{nmethod}{nshuffle}(1,track_1_index) replay_score{nmethod}{nshuffle}(2,track_2_index)]);
 
-                    %     end
+                    % Calculate percentage of tracks significant for
+                    % both tracks
                     multi_event_number = sum(ismember(track_1_index,track_2_index));
                     multi_event_percent = multi_event_number/(length(track_1_index)+length(track_2_index)-multi_event_number);
-                    
+
+                    % Calculate mean z-scored log odds difference for all significant
+                    % events (Track 1 - Track 2)
                     boot_log_odd_difference(threshold) = mean(data{nmethod}{nshuffle}(1,track_1_index)) ...
                         - mean(data{nmethod}{nshuffle}(2,track_2_index));
-                    
+
                     boot_percent_multi_events(threshold) = multi_event_percent;
                     % Significant event proportion (minus multitrack event number to avoid double counting)
                     boot_percent_sig_events(threshold) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
+                    
                     if nshuffle == 2
                         % cell id shuffled mean significant event proportion
                         boot_percent_shuffle_events(threshold) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
@@ -1339,12 +1444,13 @@ for nmethod = 1:length(method)
             ylabel('Proportion of all replay events')
             title(Behavioural_epoches{epoch});
         end
-        ax = gca;
-        ax.FontSize = 12;
-        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-        legend([p(1),p(2)], {'Original','Cell-id shuffle'},'Position',[0.7 0.3 0.05 0.05])
     end
 %     ylim([0 1])
+    ax = gca;
+    ax.FontSize = 12;
+    set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
+    legend([p(1),p(2)], {'Original','Cell-id shuffle'},'Position',[0.7 0.3 0.05 0.05])
+    
     cd ground_truth_original\Figure
     filename = sprintf('%s optimisation comparisions CI.pdf',method{nmethod})
     sgtitle(method{nmethod})

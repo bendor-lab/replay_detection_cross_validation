@@ -1,4 +1,4 @@
-function shuffled_track = ground_truth_run_shuffles(shuffle_choice,analysis_type,num_shuffles,decoded_replay_events,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
+function shuffled_track = global_remapped_run_shuffles(shuffle_choice,analysis_type,num_shuffles,decoded_replay_events,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
 % computes shuffles on replay events
 % shuffle_choice- determines what type of shuffles will be performed, entered as a string
 %
@@ -51,11 +51,10 @@ for s=1:num_shuffles
                 end
             end
         end
-        
+
     %%%%%%%%
     %%%POST time bin circular shift
     %%%%%%%        
-    
     elseif strcmp(shuffle_choice, 'POST time bin circular shift') %
         % For each shuffle, creates a new structure where the time bins within each position bin in each decoded event have been shuffled
         for track = 1 : num_tracks
@@ -72,12 +71,12 @@ for s=1:num_shuffles
                     shuffled_struct(track).replay_events(event).decoded_position=NaN;
                 end
             end
-        end
+        end        
+        
 
         %%%%%%%%
         %%%POST time bin permutation
         %%%%%%%
-
     elseif strcmp(shuffle_choice, 'POST time bin permutation') %
         % For each shuffle, creates a new structure where the time bins within each position bin in each decoded event have been shuffled
         for track = 1 : num_tracks
@@ -87,7 +86,7 @@ for s=1:num_shuffles
                 index=decoded_replay_events(1).replay_events(event).timebins_index;  %index is needed when analyzing segments of replay event, same value across all tracks
                 index = index-index(1)+1; % Start with 1
                 shuffled_index = index(randperm(length(index)));
-
+                
 
                 if length(index)>=5
                     shuffled_struct(track).replay_events(event).decoded_position = decoded_replay_events(track).replay_events(event).decoded_position(:,shuffled_index);
@@ -119,7 +118,8 @@ for s=1:num_shuffles
         shuffled_spike_count.replay_events = replayEvents_bayesian_spike_count.replay_events;
         
         % Each replay event is then decoded using the new spike count structure
-        estimated_position = bayesian_decoding_ground_truth(place_fields_BAYESIAN,shuffled_spike_count,'',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
+        estimated_position = bayesian_decoding_ground_truth(...
+            place_fields_BAYESIAN,shuffled_spike_count,'global_remapped',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
 
         for track = 1:num_tracks
             for event = 1 : num_replay_events
@@ -139,16 +139,22 @@ for s=1:num_shuffles
         
     elseif strcmp(shuffle_choice, 'PRE place_field_circular_shift')
         shuffled_place_fields=place_fields_BAYESIAN;
-        for track = 1 : num_tracks
-            num_cells = size(shuffled_place_fields.track(track).raw,2);
-            %circular shift place field bins
-            for i = 1 : num_cells
-                field =  cell2mat(shuffled_place_fields.track(track).raw(i));
-                shuffled_place_fields.track(track).raw(i) = {circshift(field, ceil(rand*length(field)))};
+
+        for event = 1:length(shuffled_place_fields.track(1).global_remapped)
+
+            for track = 1 : num_tracks
+                num_cells = size(shuffled_place_fields.track(track).global_remapped{event},2);
+                %circular shift place field bins
+                for i = 1 : num_cells
+                    field =  shuffled_place_fields.track(track).global_remapped{event}{i};
+                    shuffled_place_fields.track(track).global_remapped{event}{i} = circshift(field, ceil(rand*length(field)));
+                end
             end
         end
-        estimated_position = bayesian_decoding_ground_truth(shuffled_place_fields,'replayEvents_bayesian_spike_count','',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
-        
+%         estimated_position = bayesian_decoding_ground_truth(shuffled_place_fields,'replayEvents_bayesian_spike_count',[],BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
+
+        estimated_position = bayesian_decoding_ground_truth(...
+            shuffled_place_fields,'replayEvents_bayesian_spike_count','global_remapped',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
         %calculate decoded position with shuffled place fields
         for track = 1:num_tracks
             for event = 1 : num_replay_events
@@ -162,26 +168,29 @@ for s=1:num_shuffles
             end
         end
 
-
-
         %%%%%%%%
         %%%PRE cell_id_shuffle
         %%%%%%%
 
     elseif strcmp(shuffle_choice, 'PRE cell_id_shuffle')
-        shuffled_place_fields=place_fields_BAYESIAN;
-        for track = 1 : num_tracks
-            random_cell_index = randperm(length(place_fields_BAYESIAN.track(track).sorted_good_cells));
-            random_cell = place_fields_BAYESIAN.track(track).sorted_good_cells(random_cell_index);
-            original_cell = place_fields_BAYESIAN.track(track).sorted_good_cells;
 
-            % global remapping by swapping the Cell ID for good cells
-            for i = 1 : length(original_cell)
-                shuffled_place_fields.track(track).raw{original_cell(i)} = place_fields_BAYESIAN.track(track).raw{random_cell(i)};
+        shuffled_place_fields=place_fields_BAYESIAN;
+        for event = 1:length(shuffled_place_fields.track(1).global_remapped)
+
+            for track = 1 : num_tracks
+                random_cell_index = randperm(length(place_fields_BAYESIAN.track(track).sorted_good_cells));
+                random_cell = place_fields_BAYESIAN.track(track).sorted_good_cells(random_cell_index);
+                original_cell = place_fields_BAYESIAN.track(track).sorted_good_cells; % Original
+
+                % global remapping by swapping the Cell ID for good cells
+                for i = 1 : length(original_cell)
+                    shuffled_place_fields.track(track).global_remapped{event}{original_cell(i)} = place_fields_BAYESIAN.track(track).global_remapped{event}{random_cell(i)};
+                end
             end
         end
 
-        estimated_position = bayesian_decoding_ground_truth(shuffled_place_fields,'replayEvents_bayesian_spike_count','',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
+        estimated_position = bayesian_decoding_ground_truth(...
+            shuffled_place_fields,'replayEvents_bayesian_spike_count','global_remapped',BAYSESIAN_NORMALIZED_ACROSS_TRACKS,'N');
 
         %calculate decoded position with shuffled place fields
         for track = 1:num_tracks

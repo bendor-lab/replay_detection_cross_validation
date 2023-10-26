@@ -8,7 +8,7 @@ cd ground_truth_original
 save log_odd_wcorr_spike_train_circular_shift log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles{1},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles{1},3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_spike_train_circular_shift_global_remapped log_odd
 cd ..
@@ -19,7 +19,7 @@ cd ground_truth_original
 save log_odd_wcorr_place_field_circular_shift log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles{2},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles{2},3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_place_field_circular_shift_global_remapped log_odd
 cd ..
@@ -30,7 +30,7 @@ cd ground_truth_original
 save log_odd_wcorr_place_bin_circular_shift log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles{3},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles{3},3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_place_bin_circular_shift_global_remapped log_odd
 cd ..
@@ -41,7 +41,7 @@ cd ground_truth_original
 save log_odd_wcorr_time_bin_permutation log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles{5},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles{5},3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_time_bin_permutation_global_remapped log_odd
 cd ..
@@ -53,7 +53,7 @@ cd ground_truth_original
 save log_odd_linear_place_bin_circular_shift log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','linear',shuffles{3},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','linear',shuffles{3},3,2.1)
 cd ground_truth_original
 save log_odd_linear_place_bin_circular_shift_global_remapped log_odd
 cd ..
@@ -64,7 +64,7 @@ cd ground_truth_original
 save log_odd_path_place_bin_circular_shift log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','linear',shuffles{3},3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','linear',shuffles{3},3,2.1)
 cd ground_truth_original
 save log_odd_path_place_bin_circular_shift_global_remapped log_odd
 cd ..
@@ -77,7 +77,7 @@ cd ground_truth_original
 save log_odd_wcorr_two_PRE_shuffles log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_two_PRE_shuffles_global_remapped log_odd
 cd ..
@@ -89,7 +89,7 @@ cd ground_truth_original
 save log_odd_wcorr_two_POST_shuffles log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_two_POST_shuffles_global_remapped log_odd
 cd ..
@@ -114,7 +114,7 @@ end
 
 method = {'wcorr','linear','path'};
 for nmethod = 1:length(method)
-    [log_odd] = extract_ground_truth_info(folders,'global remapped',method{nmethod},shuffles,3,2.1)
+    [log_odd] = extract_ground_truth_info(folders,'global_remapped',method{nmethod},shuffles,3,2.1)
     cd ground_truth_original
     if strcmp(method{nmethod},'wcorr')
         save log_odd_wcorr_PRE_place_POST_time_global_remapped log_odd
@@ -134,7 +134,7 @@ cd ground_truth_original
 save log_odd_wcorr_PRE_place_POST_place log_odd
 cd ..
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_PRE_place_POST_place_global_remapped log_odd
 cd ..
@@ -148,7 +148,7 @@ save log_odd_wcorr_PRE_spike_POST_place log_odd
 cd ..
 
 
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,3,2.1)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,3,2.1)
 cd ground_truth_original
 save log_odd_wcorr_PRE_spike_POST_place_global_remapped log_odd
 cd ..
@@ -164,7 +164,7 @@ cd ..
 
 ripple_zscore_threshold = 0;
 no_of_shuffles = 3;
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',no_of_shuffles,ripple_zscore_threshold,2.01)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',no_of_shuffles,ripple_zscore_threshold,2.01)
 cd ground_truth_original
 save log_odd_wcorr_ripple_0_global_remapped log_odd
 cd ..
@@ -178,7 +178,7 @@ save log_odd_wcorr_PRE_place_POST_time_ripple_0 log_odd
 cd ..
 
 ripple_zscore_threshold = 0;
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,ripple_zscore_threshold,2.01)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,ripple_zscore_threshold,2.01)
 cd ground_truth_original
 save log_odd_wcorr_PRE_place_POST_time_ripple_0_global_remapped log_odd
 cd ..
@@ -192,7 +192,7 @@ save log_odd_wcorr_POST_place_ripple_0 log_odd
 cd ..
 
 ripple_zscore_threshold = 0;
-[log_odd] = extract_ground_truth_info(folders,'global remapped','wcorr',shuffles,ripple_zscore_threshold,2.01)
+[log_odd] = extract_ground_truth_info(folders,'global_remapped','wcorr',shuffles,ripple_zscore_threshold,2.01)
 cd ground_truth_original
 save log_odd_wcorr_POST_place_ripple_0_global_remapped log_odd
 cd ..
@@ -225,7 +225,7 @@ for k = 1:length(method)
 
 
     no_of_shuffles = 3;
-    option = 'global remapped';
+    option = 'global_remapped';
     [log_odd] = extract_ground_truth_info(folders,option,method{k},no_of_shuffles,ripple_zscore_threshold,2.1)
 
     cd ground_truth_original

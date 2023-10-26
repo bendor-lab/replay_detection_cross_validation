@@ -452,9 +452,9 @@ legend([p(1),p(2),p(3),p(4)], {ripple_types{1},ripple_types{2},ripple_types{3},r
 
 
 cd ground_truth_original\resubmission_figure
-filename = 'wcorr 2 shuffles ripple threshold log odds comparision CI (all events).pdf'
+filename = 'wcorr 2 shuffles ripple threshold log odds comparision CI.pdf'
 saveas(gcf,filename)
-filename = 'wcorr 2 shuffles ripple threshold log odds comparision CI (all events).fig'
+filename = 'wcorr 2 shuffles ripple threshold log odds comparision CI.fig'
 saveas(gcf,filename)
 cd ..
 cd ..
@@ -517,65 +517,7 @@ clf
 % clf
 
 
-
-p_val_threshold = round(10.^[-3:0.01:log10(0.2)],4);
-p_val_threshold = flip(unique(p_val_threshold));
-p_val_threshold(1) = 0.2;
-low_threshold = find(ismembertol(p_val_threshold,[0.0501 0.02 0.01 0.005 0.002 0.001],eps) == 1);
-ripple_types = {'No ripple threshold','Ripple threshold 3','Ripple threshold 5','Ripple threshold 10'}
-colour_line= {[127,205,187]/255,[65,182,196]/255,[34,94,168]/255,[37,52,148]/255};
-Behavioural_epoches = {'PRE','RUN','POST'};
-marker_shape = {'o','^','s'};
-nfig = 1;
-
-fig = figure(2)
-fig.Position = [834 116 850 885];
-for epoch = 2:3
-    for nmethod = [4 3 2 1]
-
-        subplot(2,2,nfig)
-        y = mean(percent_shuffle_events{nmethod}{epoch}(low_threshold,:),2);
-
-        s(nmethod) = scatter(p_val_threshold(low_threshold),y,20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        hold on
-        m{nmethod} = errorbar(p_val_threshold(low_threshold),y,y-percent_shuffle_events_CI{nmethod}{epoch}(low_threshold,1),...
-            percent_shuffle_events_CI{nmethod}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
-        m{nmethod}.Color = colour_line{nmethod};
-        %             hold on
-        %             r(nshuffle) = rectangle('Position',pos)
-        set(gca,'xscale','log')
-        xticks(flip(p_val_threshold(low_threshold)))
-        xticklabels({'0.001','0.002','0.005','0.01','0.02','0.05'})
-        xlim([0 0.06])
-        ylim([0 0.2])
-        ylabel('mean false-positive rates')
-        hold on
-        xlabel('Sequenceness alpha level')
-        title(Behavioural_epoches{epoch})
-        %             title('Multitrack event proportion vs p value')
-        ax = gca;
-        ax.FontSize = 12;
-        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-    end
-    
-    nfig = nfig + 1;
-end
-legend([s(1) s(2) s(3) s(4)], {ripple_types{1},ripple_types{2},ripple_types{3},ripple_types{4}},'Position',[0.7 0.2 0.05 0.05])
-%     legend([s(1),s(2),s(3),s(4)], {'spike train circular shift','place field circular shift','place bin circular shift','time bin permutation'},'Position',[0.35 0.2 0.05 0.05])
-%     sgtitle('Multitrack event proportion vs Sequenceness p value')
-cd ground_truth_original\resubmission_figure\
-filename = sprintf('wcorr 2 shuffles ripple threshold cell-id shuffled sig proportion.pdf')
-saveas(gcf,filename)
-filename = sprintf('wcorr 2 shuffles ripple threshold cell-id shuffled sig proportion.fig')
-saveas(gcf,filename)
-cd ..
-cd ..
-clf
-
-
 % 
-% % POST ripple threshold
 % p_val_threshold = round(10.^[-3:0.01:log10(0.2)],4);
 % p_val_threshold = flip(unique(p_val_threshold));
 % p_val_threshold(1) = 0.2;
@@ -585,6 +527,64 @@ clf
 % Behavioural_epoches = {'PRE','RUN','POST'};
 % marker_shape = {'o','^','s'};
 % nfig = 1;
+% 
+% fig = figure(2)
+% fig.Position = [834 116 850 885];
+% for epoch = 2:3
+%     for nmethod = [4 3 2 1]
+% 
+%         subplot(2,2,nfig)
+%         y = mean(percent_shuffle_events_POST_ripple{nmethod}{epoch}(low_threshold,:),2);
+% 
+%         s(nmethod) = scatter(p_val_threshold(low_threshold),y,20,marker_shape{epoch},...
+%             'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+%         hold on
+%         m{nmethod} = errorbar(p_val_threshold(low_threshold),y,y-percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,1),...
+%             percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
+%         m{nmethod}.Color = colour_line{nmethod};
+%         %             hold on
+%         %             r(nshuffle) = rectangle('Position',pos)
+%         set(gca,'xscale','log')
+%         xticks(flip(p_val_threshold(low_threshold)))
+%         xticklabels({'0.001','0.002','0.005','0.01','0.02','0.05'})
+%         xlim([0 0.06])
+%         ylim([0 0.2])
+%         ylabel('mean false-positive rates')
+%         hold on
+%         xlabel('Sequenceness alpha level')
+%         title(Behavioural_epoches{epoch})
+%         %             title('Multitrack event proportion vs p value')
+%         ax = gca;
+%         ax.FontSize = 12;
+%         set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
+%     end
+%     
+%     nfig = nfig + 1;
+% end
+% legend([s(1) s(2) s(3) s(4)], {ripple_types{1},ripple_types{2},ripple_types{3},ripple_types{4}},'Position',[0.7 0.2 0.05 0.05])
+% %     legend([s(1),s(2),s(3),s(4)], {'spike train circular shift','place field circular shift','place bin circular shift','time bin permutation'},'Position',[0.35 0.2 0.05 0.05])
+% %     sgtitle('Multitrack event proportion vs Sequenceness p value')
+% cd ground_truth_original\resubmission_figure\
+% filename = sprintf('wcorr 2 shuffles ripple threshold cell-id shuffled sig proportion.pdf')
+% saveas(gcf,filename)
+% filename = sprintf('wcorr 2 shuffles ripple threshold cell-id shuffled sig proportion.fig')
+% saveas(gcf,filename)
+% cd ..
+% cd ..
+% clf
+
+
+% 
+% % POST ripple threshold
+p_val_threshold = round(10.^[-3:0.01:log10(0.2)],4);
+p_val_threshold = flip(unique(p_val_threshold));
+p_val_threshold(1) = 0.2;
+low_threshold = find(ismembertol(p_val_threshold,[0.0501 0.02 0.01 0.005 0.002 0.001],eps) == 1);
+ripple_types = {'No ripple threshold','Ripple threshold 3','Ripple threshold 5','Ripple threshold 10'}
+colour_line= {[127,205,187]/255,[65,182,196]/255,[34,94,168]/255,[37,52,148]/255};
+Behavioural_epoches = {'PRE','RUN','POST'};
+marker_shape = {'o','^','s'};
+nfig = 1;
 % 
 % fig = figure(2)
 % fig.Position = [834 116 850 885];
@@ -653,7 +653,7 @@ for nmethod = [4 3 2 1]
         hold on
         xlabel('mean log odds difference')
         %             title(Behavioural_epoches{epoch})
-        title('Original alpha level =< 0.05')
+        title('Original alpha level = 0.05')
     end
 end
     ax = gca;
@@ -670,10 +670,10 @@ subplot(2,2,2)
 %         tempt = find(mean(percent_multi_events{nmethod}{nshuffle}{epoch},2) <= 0.05);
 for nmethod = [4 3 2 1]
     for epoch = 2:3
-        [c index(nmethod)] = min(abs(mean(percent_shuffle_events{nmethod}{epoch},2) - 0.05));
+        [c index(nmethod)] = min(abs(mean(percent_shuffle_events_POST_ripple{nmethod}{epoch},2) - 0.05));
 %          [c index(nmethod)] = min(abs(mean(percent_multi_events{nmethod}{1}{epoch},2) - 0.05));
         x = mean(mean(log_odd_difference{nmethod}{1}{epoch}(index(nmethod),:),2),2);
-        y = mean(percent_sig_events_POST_ripple{nmethod}{1}{epoch}(index(nmethod),:),2);
+        y = mean(percent_sig_events{nmethod}{1}{epoch}(index(nmethod),:),2);
         s(nmethod) = scatter(x,y,20,marker_shape{epoch},...
             'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
         %             hold on
@@ -694,7 +694,7 @@ for nmethod = [4 3 2 1]
         hold on
         xlabel('mean log odds difference')
         %             title(Behavioural_epoches{epoch})
-        title('Equivalent alpha level when cell-id shuffled sig proportion = 0.05')
+        title('Mean false-positive rates = 0.05')
     end
 end
     ax = gca;

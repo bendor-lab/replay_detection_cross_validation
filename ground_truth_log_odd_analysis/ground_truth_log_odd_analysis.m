@@ -293,13 +293,13 @@ for f = 1:length(folders)
 
         if ~isempty(p)
             for shuffle_id=1:length(shuffle_choice)
-                shuffle_type{shuffle_id}.shuffled_track = global_remapped_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type{shuffle_id}.shuffled_track = randomised_data_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
             end
         else
             disp('parallel processing not possible');
             for shuffle_id=1:length(shuffle_choice)
-                shuffle_type{shuffle_id}.shuffled_track = global_remapped_run_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type{shuffle_id}.shuffled_track = randomised_data_run_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
             end
         end
@@ -348,9 +348,9 @@ for f = 1:length(folders)
         p = gcp; % Starting new parallel pool
         if ~isempty(p)
             for shuffle_id=1:length(shuffle_choice)
-                shuffle_type1{shuffle_id}.shuffled_track = global_remapped_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type1{shuffle_id}.shuffled_track = randomised_data_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events1,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
-                shuffle_type2{shuffle_id}.shuffled_track = global_remapped_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type2{shuffle_id}.shuffled_track = randomised_data_parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events2,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
                 %                 shuffle_type1{shuffle_id}.shuffled_track = parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,decoded_replay_events1);
                 %                 shuffle_type2{shuffle_id}.shuffled_track = parallel_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,decoded_replay_events2);
@@ -358,9 +358,9 @@ for f = 1:length(folders)
         else
             disp('parallel processing not possible');
             for shuffle_id=1:length(shuffle_choice)
-                shuffle_type1{shuffle_id}.shuffled_track = global_remapped_run_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type1{shuffle_id}.shuffled_track = randomised_data_run_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events1,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
-                shuffle_type2{shuffle_id}.shuffled_track = global_remapped_run_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,...
+                shuffle_type2{shuffle_id}.shuffled_track = randomised_data_run_shuffles(shuffle_choice{shuffle_id},analysis_type,'global_remapped',num_shuffles,...
                     decoded_replay_events2,place_fields_BAYESIAN,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
 
                 %                 shuffle_type1{shuffle_id}.shuffled_track = run_shuffles(shuffle_choice{shuffle_id},analysis_type,num_shuffles,decoded_replay_events1);

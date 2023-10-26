@@ -1,5 +1,5 @@
 function [] = ground_truth_replay_sequence_analysis(folders,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
-for nfolder = 2:2
+for nfolder = 1:10
     tic
     cd(folders{nfolder})
     load extracted_place_fields_BAYESIAN

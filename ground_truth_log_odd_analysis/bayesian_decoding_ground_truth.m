@@ -171,6 +171,44 @@ for track_id=1:length(place_fields_BAYESIAN.track)
             replay_id = bayesian_spike_count.replay_events_indices;
             estimated_position(track_id).replay = track_reconstruct(n.replay,all_place_fields{track_id},place_field_index,replay_id,0.02,'per event');
 
+        elseif strcmp(option,'place_field_shifted')
+                for event = 1:length(bayesian_spike_count.replay_events)
+
+                    for k=1:length(place_field_index)
+                        single_place_field = place_fields_BAYESIAN.track(track_id).place_field_shifted{event}{place_field_index(k)}; %get raw place field
+                        single_place_field(find(isnan(single_place_field))) = 0; % remove NaNs in place field and replace by 0
+                        % single_place_field = smooth(single_place_field,parameters.smoothing_number_of_bins); %smooth place field
+
+                        if min(single_place_field)<0
+                            disp('error- spike rate of place field less than zero')
+                        end
+                        tempt{track_id}(k,:) = single_place_field;
+                    end
+                    all_place_fields{track_id}{event} = tempt{track_id};
+                end
+
+                replay_id = bayesian_spike_count.replay_events_indices;
+                estimated_position(track_id).replay = track_reconstruct(n.replay,all_place_fields{track_id},place_field_index,replay_id,0.02,'per event');
+
+        elseif strcmp(option,'cross_experiment_shuffled')
+            for event = 1:length(bayesian_spike_count.replay_events)
+
+                for k=1:length(place_field_index)
+                    single_place_field = place_fields_BAYESIAN.track(track_id).cross_experiment_shuffled{event}{place_field_index(k)}; %get raw place field
+                    single_place_field(find(isnan(single_place_field))) = 0; % remove NaNs in place field and replace by 0
+                    % single_place_field = smooth(single_place_field,parameters.smoothing_number_of_bins); %smooth place field
+
+                    if min(single_place_field)<0
+                        disp('error- spike rate of place field less than zero')
+                    end
+                    tempt{track_id}(k,:) = single_place_field;
+                end
+                all_place_fields{track_id}{event} = tempt{track_id};
+            end
+
+            replay_id = bayesian_spike_count.replay_events_indices;
+            estimated_position(track_id).replay = track_reconstruct(n.replay,all_place_fields{track_id},place_field_index,replay_id,0.02,'per event');
+
         else
             for k=1:length(place_field_index)
                 single_place_field = place_fields_BAYESIAN.track(track_id).raw{place_field_index(k)}; %get raw place field

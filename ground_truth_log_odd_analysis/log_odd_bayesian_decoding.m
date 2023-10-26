@@ -20,6 +20,13 @@ if strcmp(bayesian_spike_count, 'replayEvents_bayesian_spike_count')
 elseif strcmp(bayesian_spike_count, 'replayEvents_common_good_cell_bayesian_spike_count')
     load replayEvents_common_good_cell_bayesian_spike_count
     bayesian_spike_count = replayEvents_common_good_cell_bayesian_spike_count;
+elseif strcmp(bayesian_spike_count, 'replayEvents_shifted_bayesian_spike_count')
+    load replayEvents_shifted_bayesian_spike_count
+    bayesian_spike_count = replayEvents_shifted_bayesian_spike_count;
+elseif strcmp(bayesian_spike_count, 'replayEvents_common_cell_shifted_bayesian_spike_count')
+    load replayEvents_common_cell_shifted_bayesian_spike_count
+    bayesian_spike_count = replayEvents_common_cell_shifted_bayesian_spike_count;
+
 elseif strcmp(bayesian_spike_count, 'circular_shift_spike_count') % For noise in replay model
     load circular_shift_spike_count
     bayesian_spike_count = circular_shift_spike_count;
@@ -283,7 +290,45 @@ elseif strcmp(modify,'global remapping')
     
     all_place_fields{1} = [tempt{1} tempt{2}];
     
-    
+    elseif strcmp(modify,'place_field_shifted')
+        % for circular shift, get place fields for each event
+        for event = 1:length(bayesian_spike_count.replay_events)
+            for track_id = 1:2
+                for k=1:length(place_field_index)
+                    single_place_field = place_fields_BAYESIAN.track(track_id).place_field_shifted{event}{place_field_index(k)}; %get raw place field
+                    single_place_field(find(isnan(single_place_field))) = 0; % remove NaNs in place field and replace by 0
+                    % single_place_field = smooth(single_place_field,parameters.smoothing_number_of_bins); %smooth place field
+
+                    if min(single_place_field)<0
+                        disp('error- spike rate of place field less than zero')
+                    end
+                    tempt{track_id}(k,:) = single_place_field;
+                end
+            end
+
+            all_place_fields{1}{event} = [tempt{1} tempt{2}];
+        end
+
+
+    elseif strcmp(modify,'cross_experiment_shuffled')
+        % for circular shift, get place fields for each event
+        for event = 1:length(bayesian_spike_count.replay_events)
+            for track_id = 1:2
+                for k=1:length(place_field_index)
+                    single_place_field = place_fields_BAYESIAN.track(track_id).cross_experiment_shuffled{event}{place_field_index(k)}; %get raw place field
+                    single_place_field(find(isnan(single_place_field))) = 0; % remove NaNs in place field and replace by 0
+                    % single_place_field = smooth(single_place_field,parameters.smoothing_number_of_bins); %smooth place field
+
+                    if min(single_place_field)<0
+                        disp('error- spike rate of place field less than zero')
+                    end
+                    tempt{track_id}(k,:) = single_place_field;
+                end
+            end
+
+            all_place_fields{1}{event} = [tempt{1} tempt{2}];
+        end
+
     elseif strcmp(modify,'place field shift')
         % for circular shift, get place fields for each event
         for event = 1:length(bayesian_spike_count.replay_events)
@@ -367,7 +412,7 @@ elseif strcmp(modify,'global remapping')
     end
     
     % Turning curve shuffle (T1 and T2 label)
-    if strcmp(modify,'global remapping per event') | strcmp(modify,'PRE place_field_circular_shift')
+    if strcmp(modify,'global remapping per event') | strcmp(modify,'PRE place_field_circular_shift') | strcmp(modify,'place_field_shifted') | strcmp(modify,'cross_experiment_shuffled') 
         % If global remapping or PRE place field circular shift, then do it
         % for each event.
         for event = 1:length(bayesian_spike_count.replay_events)
@@ -390,7 +435,7 @@ load decoded_replay_events_segments
 replay_id = bayesian_spike_count.replay_events_indices;
 
 if strcmp(modify,'place field shift') | strcmp(modify,'global remapping per event')...
-        | strcmp(modify,'rate remapping') | strcmp(modify,'track label swap')
+        | strcmp(modify,'rate remapping') | strcmp(modify,'track label swap') | strcmp(modify,'place_field_shifted') | strcmp(modify,'cross_experiment_shuffled') 
     if isempty(option)
         estimated_position(1).replay = track_reconstruct(decoded_replay_events,n.replay,all_place_fields{1},place_field_index,replay_id,bin_width,'per event');
     elseif strcmp(option,'ratemap shuffle')

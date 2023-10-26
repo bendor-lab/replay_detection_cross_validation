@@ -31,8 +31,8 @@ folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ct
 
 
 % Bayesian Decoding of Track 1 and Track 2 Replay -> Log Odd
-BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 0 % Normalised within tracks
-% BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 1 % Normalised across tracks
+% BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 0 % Normalised within tracks
+BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 1 % Normalised across tracks
 ground_truth_log_odd_analysis(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS);
 
 if ~isfolder({'ground_truth_original'})
@@ -55,7 +55,7 @@ spearman_analysis(folders)
 folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
     'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
 
-spearman_global_remapped_re_analysis(folders)
+spearman_shuffled_data_re_analysis(folders,'global_remapped')
 
 method = {'wcorr','spearman','linear','path'};
 folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
@@ -64,7 +64,7 @@ folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ct
 cd(workingDir)
 calculate_jump_distance(folders,'common')
 cd(workingDir)
-calculate_jump_distance(folders,'global remapped')
+calculate_jump_distance(folders,'global_remapped')
 
 
 clear all
@@ -133,9 +133,6 @@ folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ct
 option = 'common';
 method = {'ripple 0-3', 'ripple 3-5','ripple 5-10','ripple 10 and above'};
 plot_ground_truth_compare_ripple_replay_quality(folders,option,method)
-
-% method = {'ripple 0', 'ripple 3','ripple 5','ripple 10'};
-% plot_ground_truth_compare_ripple_threshold(folders,option,method)
 
 
 %% Jump Distance
@@ -206,7 +203,18 @@ methods = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuffles
     'spearman median spike','spearman all spikes',...
     'linear 1 shuffle','linear 2 shuffles'};
 plot_replay_score_vs_log_odds_difference(folders,option,methods)
+%% May 2023 plot
 
+% folders = { '2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'};
+folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
+    'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
+option = 'common';
+% method = {'wcorr','spearman','linear'};
+method = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuffles','wcorr 3 shuffles'...
+    'spearman median spike','spearman all spikes',...
+    'linear 1 shuffle','linear 2 shuffles'};
+
+plot_FDR_adjusted_log_odds_difference(folders,option,method)
 
 %% Within normalisation vs across-track normalisation
 clear all

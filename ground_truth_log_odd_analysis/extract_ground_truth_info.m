@@ -2,6 +2,10 @@ function [log_odd] = extract_ground_truth_info(folders,option,method,shuffles,ri
 % Input:
 % Folders: Each Folder is data for a session
 % method = 'linear' or 'wcorr' or 'spearman' or
+% p_val_threshold = If you want to extract events at specific p value, 
+% set the p value threshold you want (e.g. 0.05) However, if you want to 
+% extract and analyse all events, please set at 2 such that all events will be
+% selected. (set at 2 such that HALF events with p value of 1 can be included for analysis) 
 
 % Output:
 % log_odd: save the log odd - log(sum(probability of T1)/sum(probability of
@@ -18,8 +22,14 @@ load subsets_of_cells;
 cd ground_truth_original
 if strcmp(option,'original') || strcmp(option,'common')
     load jump_distance
-elseif strcmp(option,'global remapped')
+elseif strcmp(option,'global_remapped')
     load jump_distance_global_remapped
+elseif strcmp(option,'spike_train_shifted')
+    load jump_distance_spike_train_shifted
+elseif strcmp(option,'place_field_shifted')
+    load jump_distance_place_field_shifted
+elseif strcmp(option,'cross_experiment_shuffled')
+    load jump_distance_cross_experiment_shuffled
 end
 cd ..
 
@@ -41,9 +51,46 @@ for f = 1:length(folders)
     if strcmp(option,'original') || strcmp(option,'common')
         load probability_ratio_original
         load probability_ratio_common_good
-    elseif strcmp(option,'global remapped')
+    else % If randomised data, initialise the variables based on the shuffle name
+        log_odd.normal.([option,'_T1_T2_ratio']) = [];
+        log_odd.normal_zscored.([option,'_original']) = [];
+        log_odd.common.([option,'_T1_T2_ratio']) = [];
+        log_odd.common_zscored.([option,'_original']) = [];
+    end
+
+    if strcmp(option,'global_remapped')
+        data_folders = 'global_remapped';
         load global_remapped_original_probability_ratio
         load global_remapped_common_good_probability_ratio
+
+        probability_ratio_original = global_remapped_original_probability_ratio;
+        probability_ratio_common_good = global_remapped_common_good_probability_ratio;
+        clear global_remapped_original_probability_ratio global_remapped_common_good_probability_ratio
+    elseif strcmp(option,'place_field_shifted')
+        data_folders = 'place_field';
+        load place_field_shifted_original_probability_ratio
+        load place_field_shifted_common_good_probability_ratio
+
+        probability_ratio_original = place_field_shifted_original_probability_ratio;
+        probability_ratio_common_good = place_field_shifted_common_good_probability_ratio;
+        clear place_field_shifted_original_probability_ratio place_field_shifted_common_good_probability_ratio
+    elseif strcmp(option,'spike_train_shifted')
+        data_folders = 'spike_train';
+        load spike_train_shifted_original_probability_ratio
+        load spike_train_shifted_common_good_probability_ratio
+
+        probability_ratio_original = spike_train_shifted_original_probability_ratio;
+        probability_ratio_common_good = spike_train_shifted_common_good_probability_ratio;
+        clear spike_train_shifted_original_probability_ratio spike_train_shifted_common_good_probability_ratio
+    elseif strcmp(option,'cross_experiment_shuffled')
+        data_folders = 'cross_experiment';
+        load cross_experiment_shuffled_original_probability_ratio
+        load cross_experiment_shuffled_common_good_probability_ratio
+
+        probability_ratio_original = cross_experiment_shuffled_original_probability_ratio;
+        probability_ratio_common_good = cross_experiment_shuffled_common_good_probability_ratio;
+        clear cross_experiment_shuffled_original_probability_ratio cross_experiment_shuffled_common_good_probability_ratio
+        
     end
 
 
@@ -73,19 +120,19 @@ for f = 1:length(folders)
                 log_odd.segment_id(track,c) = sig_event_info.segment_id(track,significant_replay_events.track(track).index(i));
 
                 % Original 20ms
-%                 log_odd.normal.probability_ratio(track,c) = probability_ratio_original{1}(track,log_odd.index(c),log_odd.segment_id(c));
+                %                 log_odd.normal.probability_ratio(track,c) = probability_ratio_original{1}(track,log_odd.index(c),log_odd.segment_id(c));
                 log_odd.normal.T1_T2_ratio(track,c) = probability_ratio_original{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
 
-%                 % True/False Ratio
-%                 for nshuffle = 1:1000
-%                     log_odd.normal.probability_ratio_shuffled{c}(nshuffle) = probability_ratio_original{2}{nshuffle}(track,log_odd.index(c),log_odd.segment_id(c));
-%                 end
-% 
-%                 % Calculate and save zscored log odd
-%                 data = log(log_odd.normal.probability_ratio(track,c));
-%                 shuffled_data = log(log_odd.normal.probability_ratio_shuffled{track}{c});
-%                 tempt = (data-mean(shuffled_data))/std(shuffled_data);
-%                 log_odd.normal_zscored.original(1,c) = tempt;
+                %                 % True/False Ratio
+                %                 for nshuffle = 1:1000
+                %                     log_odd.normal.probability_ratio_shuffled{c}(nshuffle) = probability_ratio_original{2}{nshuffle}(track,log_odd.index(c),log_odd.segment_id(c));
+                %                 end
+                %
+                %                 % Calculate and save zscored log odd
+                %                 data = log(log_odd.normal.probability_ratio(track,c));
+                %                 shuffled_data = log(log_odd.normal.probability_ratio_shuffled{track}{c});
+                %                 tempt = (data-mean(shuffled_data))/std(shuffled_data);
+                %                 log_odd.normal_zscored.original(1,c) = tempt;
                 T1_T2_ratio_shuffled = [];
                 % T1/T2 ratio
                 for nshuffle = 1:1000
@@ -100,19 +147,19 @@ for f = 1:length(folders)
 
 
                 % Common 20ms
-%                 log_odd.common.probability_ratio(c) = probability_ratio_common_good{1}(track,log_odd.index(c),log_odd.segment_id(c));
+                %                 log_odd.common.probability_ratio(c) = probability_ratio_common_good{1}(track,log_odd.index(c),log_odd.segment_id(c));
                 log_odd.common.T1_T2_ratio(track,c) = probability_ratio_common_good{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
 
-%                 % True/False Ratio
-%                 for nshuffle = 1:1000
-%                     log_odd.common.probability_ratio_shuffled{c}(nshuffle) = probability_ratio_common_good{2}{nshuffle}(track,log_odd.index(c),log_odd.segment_id(c));
-%                 end
-% 
-%                 % Calculate and save zscored log odd
-%                 data = log(log_odd.common.probability_ratio(c));
-%                 shuffled_data = log(log_odd.common.probability_ratio_shuffled{c});
-%                 tempt = (data-mean(shuffled_data))/std(shuffled_data);
-%                 log_odd.common_zscored.original(1,c) = tempt;
+                %                 % True/False Ratio
+                %                 for nshuffle = 1:1000
+                %                     log_odd.common.probability_ratio_shuffled{c}(nshuffle) = probability_ratio_common_good{2}{nshuffle}(track,log_odd.index(c),log_odd.segment_id(c));
+                %                 end
+                %
+                %                 % Calculate and save zscored log odd
+                %                 data = log(log_odd.common.probability_ratio(c));
+                %                 shuffled_data = log(log_odd.common.probability_ratio_shuffled{c});
+                %                 tempt = (data-mean(shuffled_data))/std(shuffled_data);
+                %                 log_odd.common_zscored.original(1,c) = tempt;
                 T1_T2_ratio_shuffled = [];
                 % T1/T2 ratio
                 for nshuffle = 1:1000
@@ -176,16 +223,13 @@ for f = 1:length(folders)
                 % The session ID
                 log_odd.experiment(c)=f;
             end
-              c=c+1;
+            c=c+1;
         end
 
 
-    end
-
-
-
-    if strcmp(option,'global remapped')
-        cd .\global_remapped_shuffles
+    else % Randomised dataset
+        
+        cd([data_folders,'_shuffles'])
         DIR = dir('shuffle_*');
         DataPath = natsortfiles({DIR.name})'
         cd ..
@@ -195,14 +239,14 @@ for f = 1:length(folders)
 
         % for nfolders = 1:5
         for nfolders = 1:length(DataPath)
-            destination = ['global_remapped_shuffles\shuffle_' num2str(nfolders)]
+            destination = [data_folders,'_shuffles\shuffle_' num2str(nfolders)]
 
             if isfile('extracted_sleep_state.mat')
                 copyfile('extracted_replay_events.mat',destination)
                 copyfile('extracted_position.mat',destination)
                 copyfile('extracted_sleep_state.mat',destination)
             end
-            
+
             cd(destination)
             load scored_replay
             load scored_replay_segments
@@ -226,7 +270,7 @@ for f = 1:length(folders)
 
                     % Original 20ms
                     %                 log_odd.normal.probability_ratio(track,c) = probability_ratio_original{1}(track,log_odd.index(c),log_odd.segment_id(c));
-                    log_odd.normal.global_remapped_T1_T2_ratio(track,c) = global_remapped_original_probability_ratio{nfolders}{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
+                    log_odd.normal.([option,'_T1_T2_ratio'])(track,c) = probability_ratio_original{nfolders}{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
 
                     %                 % True/False Ratio
                     %                 for nshuffle = 1:1000
@@ -241,19 +285,19 @@ for f = 1:length(folders)
                     T1_T2_ratio_shuffled = [];
                     % T1/T2 ratio
                     for nshuffle = 1:1000
-                        T1_T2_ratio_shuffled(nshuffle) = global_remapped_original_probability_ratio{nfolders}{2}{nshuffle}(1,log_odd.index(c),log_odd.segment_id(track,c));
+                        T1_T2_ratio_shuffled(nshuffle) = probability_ratio_original{nfolders}{2}{nshuffle}(1,log_odd.index(c),log_odd.segment_id(track,c));
                     end
 
                     % Calculate and save zscored log odd
-                    data = log(log_odd.normal.global_remapped_T1_T2_ratio(track,c));
+                    data = log(log_odd.normal.([option,'_T1_T2_ratio'])(track,c));
                     shuffled_data = log(T1_T2_ratio_shuffled);
                     tempt = (data-mean(shuffled_data))/std(shuffled_data);
-                    log_odd.normal_zscored.global_remapped_original(track,c) = tempt;
+                    log_odd.normal_zscored.([option,'_original'])(track,c) = tempt;
 
 
                     % Common 20ms
                     %                 log_odd.common.probability_ratio(c) = probability_ratio_common_good{1}(track,log_odd.index(c),log_odd.segment_id(c));
-                    log_odd.common.global_remapped_T1_T2_ratio(track,c) = global_remapped_common_good_probability_ratio{nfolders}{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
+                    log_odd.common.([option,'_T1_T2_ratio'])(track,c) = probability_ratio_common_good{nfolders}{1}(1,log_odd.index(c),log_odd.segment_id(track,c));
 
                     %                 % True/False Ratio
                     %                 for nshuffle = 1:1000
@@ -268,14 +312,14 @@ for f = 1:length(folders)
                     T1_T2_ratio_shuffled = [];
                     % T1/T2 ratio
                     for nshuffle = 1:1000
-                        T1_T2_ratio_shuffled(nshuffle) = global_remapped_common_good_probability_ratio{nfolders}{2}{nshuffle}(1,log_odd.index(c),log_odd.segment_id(track,c));
+                        T1_T2_ratio_shuffled(nshuffle) = probability_ratio_common_good{nfolders}{2}{nshuffle}(1,log_odd.index(c),log_odd.segment_id(track,c));
                     end
 
                     % Calculate and save zscored log odd
-                    data = log(log_odd.common.global_remapped_T1_T2_ratio(track,c));
+                    data = log(log_odd.common.([option,'_T1_T2_ratio'])(track,c));
                     shuffled_data = log(T1_T2_ratio_shuffled);
                     tempt = (data-mean(shuffled_data))/std(shuffled_data);
-                    log_odd.common_zscored.global_remapped_original(track,c) = tempt;
+                    log_odd.common_zscored.([option,'_original'])(track,c) = tempt;
 
 
                     %                     log_odd.track1_pvalue(c)=log10(9e-4+  max(p_values.WHOLE(1,log_odd.index(c),:)));
@@ -333,10 +377,8 @@ for f = 1:length(folders)
                 end
                 c=c+1;
             end
-            
+
         end
-
-
 
 
     end
@@ -355,8 +397,7 @@ for f = 1:length(folders)
 %         %     log_odd.normal = rmfield(log_odd.normal,{'global_remapped_T1_T2_ratio_shuffled','global_remapped_probability_ratio_shuffled'});
 %     end
 
-clear global_remapped_original_probability_ratio global_remapped_common_good_probability_ratio ...
-    probability_ratio_original probability_ratio_common_good
+clear probability_ratio_original probability_ratio_common_good
 
 end
 

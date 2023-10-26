@@ -1,0 +1,726 @@
+function elife_BH_test
+clear all
+num_events = 10000;
+num_cells = 10;
+noise = 0;
+% Generate random neuronal sequence with each neuron firing 1,2 or 3 spikes
+for i=1:num_events
+    spikes1 = [];
+    s = RandStream('dsfmt19937','Seed',i); % Set random seed for resampling
+    spikes1 = randperm(s,num_cells);
+    
+    spikes2 = [];
+    % each neuron always fires two spikes in burst
+    repeat_factor = 2;
+    new_seq = zeros(1, length(spikes1)*repeat_factor);
+    for n = 1:length(spikes1)
+        spikes2((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+    end
+
+    % each neuron always fires three spikes in burst
+    repeat_factor = 3;
+    spikes3 = [];
+    new_seq = zeros(1, length(spikes1)*repeat_factor);
+    for n = 1:length(spikes1)
+        spikes3((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+    end
+    
+
+    if noise == 1
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes1,round(length(spikes1)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes1),1);
+            spikes1 = [spikes1(1:insert_order) added_spikes(n) spikes1(insert_order+1:end)];
+        end
+
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes2,round(length(spikes2)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes2),1);
+            spikes2 = [spikes2(1:insert_order) added_spikes(n) spikes2(insert_order+1:end)];
+        end
+
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes3,round(length(spikes3)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes3),1);
+            spikes3 = [spikes3(1:insert_order) added_spikes(n) spikes3(insert_order+1:end)];
+        end
+    end
+
+    % Quantify the spearman correlation of the neuronal sequence
+    [r1(i),p1(i)]=corr(spikes1',sort(spikes1)','type','Spearman');
+
+    [r2(i),p2(i)]=corr(spikes2',sort(spikes2)','type','Spearman');
+
+    [r3(i),p3(i)]=corr(spikes3',sort(spikes3)','type','Spearman');
+end
+
+% p value and correltion score distribution 
+colour_line = {'k','b','r'};
+fig = figure(1)
+fig.Name = 'p value and correltion score null distribution'
+fig.Position = [680 400 770 600];
+
+subplot(2,3,1)
+histogram(r1,-1:0.1:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+ylim([0 1300])
+xlabel('correlation coefficient')
+title('Singlet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,2)
+histogram(r2,-1:0.1:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+ylim([0 1300])
+xlabel('correlation coefficient')
+title('Doublet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,3)
+histogram(r3,-1:0.1:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+ylim([0 1300])
+xlabel('correlation coefficient')
+title('Triplet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,4)
+
+histogram(p1,0:0.05:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,5)
+
+histogram(p2,0:0.05:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,6)
+
+histogram(p3,0:0.05:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+save_all_figures('P:\ground_truth_replay_analysis\Dropbo_data8\ground_truth_original\resubmission_figure',[])
+
+
+
+% Determine false positive rate
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+significance_level_threshold = 0.0001:0.001:0.2;
+for n = 1:length(significance_level_threshold)
+    % p value
+    sig_idx1{n} = find(p1<=significance_level_threshold(n));
+    sig_idx2{n} = find(p2<=significance_level_threshold(n));
+    sig_idx3{n} = find(p3<=significance_level_threshold(n));
+
+    FPR(1,n) = sum(p1<=significance_level_threshold(n))/num_events;
+    FPR(2,n) = sum(p2<=significance_level_threshold(n))/num_events;
+    FPR(3,n) = sum(p3<=significance_level_threshold(n))/num_events;
+end
+
+for n = 1:3
+    [~, idx] = min(abs(FPR(n,:) - 0.05)); % Find the index of the data point closest to 0.5
+    equivalent_threshold(n) = significance_level_threshold(idx)
+end
+
+
+
+% P value threshold
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+FPR = [];
+significance_level_threshold = 0.0001:0.01:0.2;
+for n = 1:length(significance_level_threshold)
+    % p value
+    FPR(1,n) = sum(p1<=significance_level_threshold(n))/num_events;
+    FPR(2,n) = sum(p2<=significance_level_threshold(n))/num_events;
+    FPR(3,n) = sum(p3<=significance_level_threshold(n))/num_events;
+end
+
+% false discovery rate of using only randomised sequence
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+FDR_threshold = 0.0001:0.01:0.2;
+for n = 1:length(FDR_threshold)
+    q_values = (1:length(r1))/length(r1)   * FDR_threshold(n); % calculate critical values
+    [sorted_p1, sort_idx1] = sort(p1); % sort p-values in ascending order
+    [sorted_p2, sort_idx2] = sort(p2); % sort p-values in ascending order
+    [sorted_p3, sort_idx3] = sort(p3); % sort p-values in ascending order
+    
+    % Accept candidate events with p-values less than or equal to the q-value
+    sig_idx1{n} = sort_idx1(1:find(sorted_p1 <= q_values, 1, 'last'));
+    sig_idx2{n} = sort_idx2(1:find(sorted_p2 <= q_values, 1, 'last'));
+    sig_idx3{n} = sort_idx3(1:find(sorted_p3 <= q_values, 1, 'last'));
+
+    sig_proportion(1,n) = length(sig_idx1{n})/num_events;
+    sig_proportion(2,n) = length(sig_idx2{n})/num_events;
+    sig_proportion(3,n) = length(sig_idx3{n})/num_events;
+end
+
+fig = figure
+fig.Name('')
+subplot(2,2,1)
+scatter(FDR_threshold,sig_proportion(1,:),colour_line{1});
+hold on
+scatter(FDR_threshold,sig_proportion(2,:),colour_line{2});
+scatter(FDR_threshold,sig_proportion(3,:),colour_line{3});
+xlabel('False discovery rate')
+ylabel('proportion of false events detected')
+legend('singlet','doublet','triplet')
+
+subplot(2,2,2)
+scatter(significance_level_threshold,FPR(1,:),colour_line{1});
+hold on
+scatter(significance_level_threshold,FPR(2,:),colour_line{2});
+scatter(significance_level_threshold,FPR(3,:),colour_line{3});
+xlabel('alpha level')
+ylabel('proportion of false events detected')
+
+
+
+% %%%%%%%%%%%
+% subplot(2,2,2)
+% s1 = scatter(p1,p2,10,'k','filled')
+% hold on
+% s2 = scatter(p1(sig_idx2{3}),p2(sig_idx2{3}),10,'r','filled')
+% yline(max(p2(sig_idx2{3})))
+% text(0.5,max(p2(sig_idx2{3}))+0.1,sprintf('max p value %f',max(p2(sig_idx2{3}))))
+% legend([s1,s2],{'All','Significant at FDR 0.05'})
+% xlabel('singlet event p value')
+% ylabel('doublet event p value')
+% 
+% subplot(2,2,3)
+% s1 = scatter(p1,p3,10,'k','filled')
+% hold on
+% s2 = scatter(p1(sig_idx3{3}),p3(sig_idx3{3}),10,'r','filled')
+% yline(max(p3(sig_idx3{3})))
+% text(0.5,max(p3(sig_idx3{3}))+0.1,sprintf('max p value %f',max(p3(sig_idx3{3}))))
+% legend([s1,s2],{'All','Significant at FDR 0.05'})
+% xlabel('singlet event p value')
+% ylabel('triplet event p value')
+% sgtitle('random events')
+% %%%%%%%%%%%
+
+%% false discovery rate of using randomised sequence + real events
+noise = 0;
+for i=1:num_events
+     spikes1 = [];
+     spikes2 = [];
+     spikes3 = [];
+    s = RandStream('mrg32k3a','Seed',i); % Set random seed for resampling
+
+    if i <= 0.8*num_events
+
+        s = RandStream('mrg32k3a','Seed',i); % Set random seed for resampling
+        spikes1 = randperm(s,num_cells);
+
+        % each neuron always fires two spikes in burst
+        repeat_factor = 2;
+        new_seq = zeros(1, length(spikes1)*repeat_factor);
+        for n = 1:length(spikes1)
+            spikes2((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+        end
+
+        % each neuron always fires three spikes in burst
+        repeat_factor = 3;
+        new_seq = zeros(1, length(spikes1)*repeat_factor);
+        for n = 1:length(spikes1)
+            spikes3((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+        end
+
+    else
+
+        spikes1 = 1:1:num_cells;
+        % each neuron always fires two spikes in burst
+        repeat_factor = 2;
+        new_seq = zeros(1, length(spikes1)*repeat_factor);
+        for n = 1:length(spikes1)
+            spikes2((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+        end
+        % each neuron always fires three spikes in burst
+        repeat_factor = 3;
+        new_seq = zeros(1, length(spikes1)*repeat_factor);
+        for n = 1:length(spikes1)
+            spikes3((n-1)*repeat_factor+1:n*repeat_factor) = spikes1(n);
+        end
+
+    end
+
+    %     % Add 20% noise (randomly permuting 20% of spike orders)
+    %     s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+    %     permuted_indices = randperm(s,length(spikes1), round(length(spikes1)*0.2));
+    %     s = RandStream('mrg32k3a','Seed',11*i); % Set random seed for resampling
+    %     spikes1(permuted_indices) = spikes1(flip(permuted_indices));
+    if noise == 1
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes1,round(length(spikes1)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes1),1);
+            spikes1 = [spikes1(1:insert_order) added_spikes(n) spikes1(insert_order+1:end)];
+        end
+
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes2,round(length(spikes2)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes2),1);
+            spikes2 = [spikes2(1:insert_order) added_spikes(n) spikes2(insert_order+1:end)];
+        end
+
+        % Add 10% noise
+        s = RandStream('mrg32k3a','Seed',10*i); % Set random seed for resampling
+        added_spikes = datasample(s,spikes3,round(length(spikes3)*0.1));
+
+        for n = 1:length(added_spikes)
+            s = RandStream('mrg32k3a','Seed',n); % Set random seed for resampling
+            insert_order = datasample(s,1:length(spikes3),1);
+            spikes3 = [spikes3(1:insert_order) added_spikes(n) spikes3(insert_order+1:end)];
+        end
+    end
+
+    % Quantify the spearman correlation of the neuronal sequence
+    [r1(i),p1(i)]=corr(spikes1',sort(spikes1)','type','Spearman');
+    [r2(i),p2(i)]=corr(spikes2',sort(spikes2)','type','Spearman');
+    [r3(i),p3(i)]=corr(spikes3',sort(spikes3)','type','Spearman');
+end
+
+
+
+
+fig = figure(1)
+fig.Name = 'FDR and FPR 0.05 comparision'
+fig.Position = [680 400 770 600];
+
+% FPR TPR FNR TNR
+sig_proportion = [];
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+
+% detecting based on empirical false positive rate
+sig_idx1 = find(p1<=equivalent_threshold(1));
+sig_idx2 = find(p2<=equivalent_threshold(2));
+sig_idx3 = find(p3<=equivalent_threshold(3));
+
+sig_proportion(1,n) = sum(p1<=equivalent_threshold(1))/num_events;
+sig_proportion(2,n) = sum(p2<=equivalent_threshold(2))/num_events;
+sig_proportion(3,n) = sum(p3<=equivalent_threshold(3))/num_events;
+
+
+subplot(2,2,2)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1,num_events*0.8+1:num_events)),length(intersect(sig_idx1,1:num_events*0.8));...
+    length(intersect(sig_idx2,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2,num_events*0.8+1:num_events)),length(intersect(sig_idx2,1:num_events*0.8));...
+    length(intersect(sig_idx3,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3,num_events*0.8+1:num_events)),length(intersect(sig_idx3,1:num_events*0.8))];
+bar(x,y,'stacked')
+xticklabels({'Singlet','Doublet','Triplet'})
+ylabel('Number of events')
+title('equivalent p value (FPR 0.05)')
+legend('True events','','False-positive events','Color','none')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+% P value threshold
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+FPR = [];
+significance_level_threshold = 0.0001:0.01:0.2;
+for n = 1:length(significance_level_threshold)
+    % p value
+    sig_idx1{n} = find(p1<=significance_level_threshold(n));
+    sig_idx2{n} = find(p2<=significance_level_threshold(n));
+    sig_idx3{n} = find(p3<=significance_level_threshold(n));
+
+    FPR(1,n) = sum(p1<=significance_level_threshold(n))/num_events;
+    FPR(2,n) = sum(p2<=significance_level_threshold(n))/num_events;
+    FPR(3,n) = sum(p3<=significance_level_threshold(n))/num_events;
+end
+
+subplot(2,2,1)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1{6},num_events*0.8+1:num_events)),length(intersect(sig_idx1{6},1:num_events*0.8));...
+    length(intersect(sig_idx2{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2{6},num_events*0.8+1:num_events)),length(intersect(sig_idx2{6},1:num_events*0.8));...
+    length(intersect(sig_idx3{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3{6},num_events*0.8+1:num_events)),length(intersect(sig_idx3{6},1:num_events*0.8))];
+bar(x,y,'stacked')
+title('alpha level 0.05')
+xticklabels({'Singlet','Doublet','Triplet'})
+ylabel('Number of events')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+FDR_threshold = 0.0001:0.01:0.2;
+for n = 1:length(FDR_threshold)
+    q_values = (1:length(r1))/length(r1)   * FDR_threshold(n); % calculate critical values
+    [sorted_p1, sort_idx1] = sort(p1); % sort p-values in ascending order
+    [sorted_p2, sort_idx2] = sort(p2); % sort p-values in ascending order
+    [sorted_p3, sort_idx3] = sort(p3); % sort p-values in ascending order
+    
+    % Accept candidate events with p-values less than or equal to the q-value
+    sig_idx1{n} = sort_idx1(1:find(sorted_p1 <= q_values, 1, 'last'));
+    sig_idx2{n} = sort_idx2(1:find(sorted_p2 <= q_values, 1, 'last'));
+    sig_idx3{n} = sort_idx3(1:find(sorted_p3 <= q_values, 1, 'last'));
+
+    sig_proportion(1,n) = length(sig_idx1{n})/num_events;
+    sig_proportion(2,n) = length(sig_idx2{n})/num_events;
+    sig_proportion(3,n) = length(sig_idx3{n})/num_events;
+end
+
+subplot(2,2,3)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1{6},num_events*0.8+1:num_events)),length(intersect(sig_idx1{6},1:num_events*0.8));...
+    length(intersect(sig_idx2{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2{6},num_events*0.8+1:num_events)),length(intersect(sig_idx2{6},1:num_events*0.8));...
+    length(intersect(sig_idx3{6},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3{6},num_events*0.8+1:num_events)),length(intersect(sig_idx3{6},1:num_events*0.8))];
+bar(x,y,'stacked')
+xticklabels({'Singlet','Doublet','Triplet'})
+ylabel('Number of events')
+title('FDR 0.05')
+
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+save_all_figures('P:\ground_truth_replay_analysis\Dropbo_data8\ground_truth_original\resubmission_figure',[])
+
+
+% p value and correltion score distribution with real (noise) + random
+% noise
+colour_line = {'k','b','r'};
+fig = figure(1)
+fig.Name = 'p value and correltion score real + random'
+fig.Position = [680 400 770 600];
+subplot(2,3,1)
+histogram(r1,-1:0.1:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Singlet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,2)
+histogram(r2,-1:0.1:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Doublet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,3)
+histogram(r3,-1:0.1:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Triplet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,4)
+
+histogram(p1,0:0.05:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,5)
+
+histogram(p2,0:0.05:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+
+subplot(2,3,6)
+
+histogram(p3,0:0.05:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+xlabel('p value')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+save_all_figures('P:\ground_truth_replay_analysis\Dropbo_data8\ground_truth_original\resubmission_figure',[])
+
+
+% 
+colour_line = {'k','b','r'};
+fig = figure(1)
+fig.Name = 'p value and correltion score real + random'
+fig.Position = [680 400 770 600];
+subplot(2,2,1)
+scatter(FDR_threshold,sig_proportion(1,:),colour_line{1});
+hold on
+scatter(FDR_threshold,sig_proportion(2,:),colour_line{2});
+scatter(FDR_threshold,sig_proportion(3,:),colour_line{3});
+xlabel('False discovery rate')
+ylabel('Proportion of events detected')
+legend('Singlet','Doublet','Triplet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+% save_all_figures('P:\ground_truth_replay_analysis\Dropbo_data8\ground_truth_original\resubmission_figure',[])
+
+
+subplot(2,2,2)
+scatter(significance_level_threshold,FPR(1,:),colour_line{1});
+hold on
+scatter(significance_level_threshold,FPR(2,:),colour_line{2});
+scatter(significance_level_threshold,FPR(3,:),colour_line{3});
+xlabel('alpha level')
+ylabel('proportion of events')
+legend('Singlet','Doublet','Triplet')
+ax = gca;
+ax.FontSize = 12;
+set(gca,"TickDir","out",'box', 'off','Color','none')
+save_all_figures('P:\ground_truth_replay_analysis\Dropbo_data8\ground_truth_original\resubmission_figure',[])
+
+
+% subplot(2,2,2)
+% 
+% s2 = scatter(p1(sig_idx2{3}),p2(sig_idx2{3}),10,'r','filled')
+% hold on
+% s3 = scatter(p1(sig_idx1{3}),p2(sig_idx1{3}),10,'g','filled')
+% s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+% 
+% yline(max(p2(sig_idx2{3})))
+% xline(max(p1(sig_idx1{3})))
+% text(0.15,max(p2(sig_idx2{3}))+0.01,sprintf('max p value %f',max(p2(sig_idx2{3}))));
+% text(max(p1(sig_idx1{3}))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1{3}))));
+% legend([s1,s2,s3],{'True events','Significant at FDR 0.05 Doublet','Significant at FDR 0.05 Singlet'})
+% xlabel('singlet event p value')
+% ylabel('doublet event p value')
+% ylim([0 0.2])
+% xlim([0 0.2])
+% 
+% subplot(2,2,3)
+% 
+% s2 = scatter(p1(sig_idx3{3}),p3(sig_idx3{3}),10,'r','filled')
+% hold on
+% s3 = scatter(p1(sig_idx1{3}),p3(sig_idx1{3}),10,'g','filled')
+% s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+% 
+% yline(max(p3(sig_idx3{3})))
+% xline(max(p1(sig_idx1{3})))
+% text(0.15,max(p3(sig_idx3{3}))+0.01,sprintf('max p value %f',max(p3(sig_idx3{3}))));
+% text(max(p1(sig_idx1{3}))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1{3}))));
+% legend([s1,s2,s3],{'True events','Significant at FDR 0.05 Triplet','Significant at FDR 0.05 Singlet'})
+% xlabel('singlet event p value')
+% ylabel('triplet event p value')
+% ylim([0 0.2])
+% xlim([0 0.2])
+
+subplot(2,2,4)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1{3},num_events*0.8+1:num_events)),length(intersect(sig_idx1{3},1:num_events*0.8));...
+    length(intersect(sig_idx2{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2{3},num_events*0.8+1:num_events)),length(intersect(sig_idx2{3},1:num_events*0.8));...
+    length(intersect(sig_idx3{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3{3},num_events*0.8+1:num_events)),length(intersect(sig_idx3{3},1:num_events*0.8))];
+
+bar(x,y,'stacked')
+
+
+
+
+%% P value
+
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+significance_level_threshold = [0.001 0.01 0.05 0.2];
+for n = 1:length(significance_level_threshold)
+    % Accept candidate events with p-values less than or equal to the q-value
+    sig_idx1{n} = find(p1<=significance_level_threshold(n));
+    sig_idx2{n} = find(p2<=significance_level_threshold(n));
+    sig_idx3{n} = find(p3<=significance_level_threshold(n));
+
+    sig_proportion(1,n) = sum(p1<=significance_level_threshold(n))/num_events;
+    sig_proportion(2,n) = sum(p2<=significance_level_threshold(n))/num_events;
+    sig_proportion(3,n) = sum(p3<=significance_level_threshold(n))/num_events;
+end
+
+
+% p value and correltion score distribution with real (noise) + random
+% noise
+colour_line = {'k','b','r'};
+figure
+subplot(2,3,1)
+histogram(r1,-1:0.1:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Singlet')
+
+subplot(2,3,2)
+histogram(r2,-1:0.1:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Doublet')
+
+subplot(2,3,3)
+histogram(r3,-1:0.1:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+xlabel('correlation coefficient')
+title('Triplet')
+
+subplot(2,3,4)
+
+histogram(p1,0:0.05:1,'FaceColor',colour_line{1},'FaceAlpha',0.5)
+xlabel('p value')
+
+subplot(2,3,5)
+
+histogram(p2,0:0.05:1,'FaceColor',colour_line{2},'FaceAlpha',0.5)
+xlabel('p value')
+
+subplot(2,3,6)
+
+histogram(p3,0:0.05:1,'FaceColor',colour_line{3},'FaceAlpha',0.5)
+xlabel('p value')
+
+%
+figure
+subplot(2,2,1)
+scatter(FDR_threshold,sig_proportion(1,:),colour_line{1});
+hold on
+scatter(FDR_threshold,sig_proportion(2,:),colour_line{2});
+scatter(FDR_threshold,sig_proportion(3,:),colour_line{3});
+xlabel('p value')
+ylabel('Proportion of events detected')
+
+subplot(2,2,2)
+
+s2 = scatter(p1(sig_idx2{3}),p2(sig_idx2{3}),10,'r','filled')
+hold on
+s3 = scatter(p1(sig_idx1{3}),p2(sig_idx1{3}),10,'g','filled')
+s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+
+yline(max(p2(sig_idx2{3})))
+xline(max(p1(sig_idx1{3})))
+text(0.15,max(p2(sig_idx2{3}))+0.01,sprintf('max p value %f',max(p2(sig_idx2{3}))));
+text(max(p1(sig_idx1{3}))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1{3}))));
+legend([s1,s2,s3],{'True events','Significant at p 0.05 Doublet','Significant at p 0.05 Singlet'})
+xlabel('singlet event p value')
+ylabel('doublet event p value')
+ylim([0 0.2])
+xlim([0 0.2])
+
+subplot(2,2,3)
+
+s2 = scatter(p1(sig_idx3{3}),p3(sig_idx3{3}),10,'r','filled')
+hold on
+s3 = scatter(p1(sig_idx1{3}),p3(sig_idx1{3}),10,'g','filled')
+s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+
+yline(max(p3(sig_idx3{3})))
+xline(max(p1(sig_idx1{3})))
+text(0.15,max(p3(sig_idx3{3}))+0.01,sprintf('max p value %f',max(p3(sig_idx3{3}))));
+text(max(p1(sig_idx1{3}))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1{3}))));
+legend([s1,s2,s3],{'True events','Significant at FDR 0.05 Triplet','Significant at FDR 0.05 Singlet'})
+xlabel('singlet event p value')
+ylabel('triplet event p value')
+ylim([0 0.2])
+xlim([0 0.2])
+
+subplot(2,2,4)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1{3},num_events*0.8+1:num_events)),length(intersect(sig_idx1{3},1:num_events*0.8));...
+    length(intersect(sig_idx2{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2{3},num_events*0.8+1:num_events)),length(intersect(sig_idx2{3},1:num_events*0.8));...
+    length(intersect(sig_idx3{3},num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3{3},num_events*0.8+1:num_events)),length(intersect(sig_idx3{3},1:num_events*0.8))];
+
+bar(x,y,'stacked')
+
+
+%% At equivalent p value
+significance_level_threshold = [0.001 0.01 0.05 0.2];
+sig_proportion = [];
+sig_idx1 = [];
+sig_idx2 = [];
+sig_idx3 = [];
+
+% detecting based on empirical false positive rate
+sig_idx1 = find(p1<=equivalent_threshold(1));
+sig_idx2 = find(p2<=equivalent_threshold(2));
+sig_idx3 = find(p3<=equivalent_threshold(3));
+
+sig_proportion(1,n) = sum(p1<=equivalent_threshold(1))/num_events;
+sig_proportion(2,n) = sum(p2<=equivalent_threshold(2))/num_events;
+sig_proportion(3,n) = sum(p3<=equivalent_threshold(3))/num_events;
+
+
+figure
+subplot(2,2,1)
+
+s2 = scatter(p1(sig_idx2),p2(sig_idx2),10,'r','filled')
+hold on
+s3 = scatter(p1(sig_idx1),p2(sig_idx1),10,'g','filled')
+s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+
+yline(max(p2(sig_idx2)))
+xline(max(p1(sig_idx1)))
+text(0.15,max(p2(sig_idx2))+0.01,sprintf('max p value %f',max(p2(sig_idx2))));
+text(max(p1(sig_idx1))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1))));
+legend([s1,s2,s3],{'True events','Significant at equivalent p Doublet','Significant at  equivalent p Singlet'})
+xlabel('singlet event p value')
+ylabel('doublet event p value')
+ylim([0 0.2])
+xlim([0 0.2])
+
+subplot(2,2,2)
+
+s2 = scatter(p1(sig_idx3),p3(sig_idx3),10,'r','filled')
+hold on
+s3 = scatter(p1(sig_idx1),p3(sig_idx1),10,'g','filled')
+s1 = scatter(p1(num_events*0.8+1:end),p2(num_events*0.8+1:end),5,'k','filled')
+
+yline(max(p3(sig_idx3)))
+xline(max(p1(sig_idx1)))
+text(0.15,max(p3(sig_idx3))+0.01,sprintf('max p value %f',max(p3(sig_idx3))));
+text(max(p1(sig_idx1))+0.01,0.15,sprintf('max p value %f',max(p1(sig_idx1))));
+legend([s1,s2,s3],{'True events','Significant at equivalent p Triplet','Significant at  equivalent p Singlet'})
+xlabel('singlet event p value')
+ylabel('triplet event p value')
+ylim([0 0.2])
+xlim([0 0.2])
+
+
+subplot(2,2,3)
+x = [1 2 3];
+% true positive, true negative, false positive true negative
+y = [length(intersect(sig_idx1,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx1,num_events*0.8+1:num_events)),length(intersect(sig_idx1,1:num_events*0.8));...
+    length(intersect(sig_idx2,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx2,num_events*0.8+1:num_events)),length(intersect(sig_idx2,1:num_events*0.8));...
+    length(intersect(sig_idx3,num_events*0.8+1:num_events)),2000-length(intersect(sig_idx3,num_events*0.8+1:num_events)),length(intersect(sig_idx3,1:num_events*0.8))];
+
+bar(x,y,'stacked')
+

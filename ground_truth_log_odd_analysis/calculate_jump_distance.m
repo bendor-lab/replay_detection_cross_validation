@@ -1,4 +1,14 @@
 function jump_distance = calculate_jump_distance(folders,option)
+if strcmp(option,'global_remapped')
+    data_folders = 'global_remapped';
+elseif strcmp(option,'place_field_shifted')
+    data_folders = 'place_field';
+elseif strcmp(option,'spike_train_shifted')
+    data_folders = 'spike_train';
+elseif strcmp(option,'cross_experiment_shuffled')
+    data_folders = 'cross_experiment';
+end
+
 
 jump_distance = [];
 if strcmp(option,'common') || strcmp(option,'original')
@@ -7,7 +17,7 @@ if strcmp(option,'common') || strcmp(option,'original')
         cd(folders{nfolder})
         parameters = list_of_parameters;
         load('decoded_replay_events.mat')
-%         load('decoded_replay_events_segments.mat')
+        %         load('decoded_replay_events_segments.mat')
 
         for j = 1:length(decoded_replay_events)
             for i = 1 : length(decoded_replay_events(1).replay_events)
@@ -24,30 +34,31 @@ if strcmp(option,'common') || strcmp(option,'original')
                 jump_distance{nfolder}{j}{i} = max(gaps);
             end
         end
-        
+
         cd ..
     end
-    
+
     cd ground_truth_original
     save jump_distance jump_distance
     cd ..
-elseif strcmp(option,'global remapped')
+else
     for nfolder = 1:length(folders)
         cd(folders{nfolder})
-        cd .\global_remapped_shuffles
+
+        cd([data_folders,'_shuffles'])
         DIR = dir('shuffle_*');
         DataPath = natsortfiles({DIR.name})'
         cd ..
 
         for f = 1:length(DataPath)
-            destination = ['global_remapped_shuffles\shuffle_' num2str(f)]
+            destination = [data_folders,'_shuffles\shuffle_' num2str(f)]
             cd(destination)
 
             parameters = list_of_parameters;
             load decoded_replay_events
-%             load decoded_replay_events_segments
+            %             load decoded_replay_events_segments
 
-            
+
 
             for j = 1:length(decoded_replay_events)
                 for i = 1 : length(decoded_replay_events(1).replay_events)
@@ -64,14 +75,15 @@ elseif strcmp(option,'global remapped')
                     jump_distance{f}{nfolder}{j}{i} = max(gaps);
                 end
             end
-            
+
             cd ..
             cd ..
         end
         cd ..
     end
     cd ground_truth_original
-    save jump_distance_global_remapped jump_distance
+    filename = (sprintf('jump_distance_%s.mat',option));
+    save(filename,'jump_distance','-mat')
     cd ..
 end
 end
