@@ -178,7 +178,7 @@ for f = 8
 
         % RUN SHUFFLES
         disp('running shuffles')
-        num_shuffles=10;
+        num_shuffles=1000;
         analysis_type=[1 1 1 0];  %just linear fit, weighted correlation and pacman
         p = gcp; % Starting new parallel pool
         shuffle_choice={'PRE spike_train_circular_shift','PRE place_field_circular_shift', 'POST place bin circular shift',...

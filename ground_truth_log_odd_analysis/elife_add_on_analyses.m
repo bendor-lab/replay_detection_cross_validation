@@ -7,11 +7,11 @@ cd(workingDir)
 folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
     'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
 
-BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 1 % Normalised across tracks
-timebin = 0.02
+BAYSESIAN_NORMALIZED_ACROSS_TRACKS = 1; % Normalised across tracks
+timebin = 0.02;
 % ground_truth_log_odd_analysis_place_field_randomised(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
 % ground_truth_log_odd_analysis_spike_train_randomised(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
-
+ground_truth_log_odd_analysis_spike_train_randomised_addon(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
 % place_fields_BAYESIAN_combined = generate_cross_experiment_cell_id_shuffles(folders);
 % ground_truth_log_odd_analysis_cross_experiment_randomised(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
 
@@ -72,26 +72,26 @@ for n = 1:length(shuffles)
     clear log_odd
 end
 
-% % spike train shuffle log odds
-% shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POST place bin circular shift'...
-%     ,'POST time bin permutation','PRE cell_id_shuffle'};
-% 
-% for n = 2:length(shuffles)
-%     [log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','wcorr',shuffles{n},3,2.1)
-% 
-%     if n == 1
-%         save('ground_truth_original\log_odd_wcorr_spike_train_circular_shift_spike_train_shifted.mat','log_odd','-mat')
-%     elseif n == 2
-%         save('ground_truth_original\log_odd_wcorr_place_field_circular_shift_spike_train_shifted.mat','log_odd','-mat')
-%     elseif n == 3
-%         save('ground_truth_original\log_odd_wcorr_place_bin_circular_shift_spike_train_shifted.mat','log_odd','-mat')
-%     elseif n == 4
-%         save('ground_truth_original\log_odd_wcorr_time_bin_permutation_spike_train_shifted.mat','log_odd','-mat')
-%     elseif n == 5
-%         save('ground_truth_original\log_odd_wcorr_cell_id_shuffle_spike_train_shifted.mat','log_odd','-mat')
-%     end
-% 
-% end
+% spike train shuffle log odds
+shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POST place bin circular shift'...
+    ,'POST time bin permutation','PRE cell_id_shuffle'};
+
+for n = 1:length(shuffles)
+    [log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','wcorr',shuffles{n},3,2.1)
+
+    if n == 1
+        save('ground_truth_original\log_odd_wcorr_spike_train_circular_shift_spike_train_shifted.mat','log_odd','-mat')
+    elseif n == 2
+        save('ground_truth_original\log_odd_wcorr_place_field_circular_shift_spike_train_shifted.mat','log_odd','-mat')
+    elseif n == 3
+        save('ground_truth_original\log_odd_wcorr_place_bin_circular_shift_spike_train_shifted.mat','log_odd','-mat')
+    elseif n == 4
+        save('ground_truth_original\log_odd_wcorr_time_bin_permutation_spike_train_shifted.mat','log_odd','-mat')
+    elseif n == 5
+        save('ground_truth_original\log_odd_wcorr_cell_id_shuffle_spike_train_shifted.mat','log_odd','-mat')
+    end
+
+end
 %% Validating the use of cell-id randomized dataset
 clear all
 % workingDir = 'D:\ground_truth_replay_analysis\Dropbo_data8_normalised_within';
