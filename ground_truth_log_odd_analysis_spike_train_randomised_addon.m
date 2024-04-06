@@ -19,7 +19,7 @@ c = 1;
 current_directory=pwd;
 load subsets_of_cells;
 
-for f = 1:length(folders)
+for f = 4:10
     cd Tables
     load subsets_of_cells;
     cd ..

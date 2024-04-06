@@ -55,6 +55,7 @@ end
 
 total_number{3} = total_number{2};
 total_number{4} = total_number{2};
+total_number{5} = total_number{2};
 
 index = [];
 epoch_index = [];
@@ -71,6 +72,8 @@ for nmethod = 1:length(method)
         log_odd_compare{4}{3} = log_odd;
         load log_odd_wcorr_time_bin_permutation_place_field_shifted
         log_odd_compare{4}{4} = log_odd;
+        load log_odd_wcorr_time_bin_permutation_spike_train_shifted
+        log_odd_compare{4}{5} = log_odd;
 
     elseif strcmp(method{nmethod},'place shuffle')
         load log_odd_wcorr_place_bin_circular_shift
@@ -81,6 +84,8 @@ for nmethod = 1:length(method)
         log_odd_compare{3}{3} = log_odd;
         load log_odd_wcorr_place_bin_circular_shift_place_field_shifted
         log_odd_compare{3}{4} = log_odd;
+        load log_odd_wcorr_place_bin_circular_shift_spike_train_shifted
+        log_odd_compare{3}{5} = log_odd;
 
     elseif strcmp(method{nmethod},'place field shuffle')
         load log_odd_wcorr_place_field_circular_shift
@@ -91,6 +96,8 @@ for nmethod = 1:length(method)
         log_odd_compare{2}{3} = log_odd;
         load log_odd_wcorr_place_field_circular_shift_place_field_shifted
         log_odd_compare{2}{4} = log_odd;
+        load log_odd_wcorr_place_field_circular_shift_spike_train_shifted
+        log_odd_compare{2}{5} = log_odd;
 
     elseif strcmp(method{nmethod},'spike shuffle')
         load log_odd_wcorr_spike_train_circular_shift
@@ -101,6 +108,9 @@ for nmethod = 1:length(method)
         log_odd_compare{1}{3} = log_odd;
         load log_odd_wcorr_spike_train_circular_shift_place_field_shifted
         log_odd_compare{1}{4} = log_odd;
+        load log_odd_wcorr_spike_train_circular_shift_spike_train_shifted
+        log_odd_compare{1}{5} = log_odd;
+
 
     elseif strcmp(method{nmethod},'cell id shuffle')
         load log_odd_wcorr_cell_id_shuffle
@@ -111,6 +121,9 @@ for nmethod = 1:length(method)
         log_odd_compare{5}{3} = log_odd;
         load log_odd_wcorr_cell_id_shuffle_place_field_shifted
         log_odd_compare{5}{4} = log_odd;
+        load log_odd_wcorr_cell_id_shuffle_spike_train_shifted
+        log_odd_compare{5}{5} = log_odd;
+
     end
 
 
@@ -147,6 +160,7 @@ for nmethod = 1:length(method)
         data{nmethod}{2} = log_odd_compare{nmethod}{2}.common_zscored.global_remapped_original;
         data{nmethod}{3} = log_odd_compare{nmethod}{3}.common_zscored.cross_experiment_shuffled_original;
         data{nmethod}{4} = log_odd_compare{nmethod}{4}.common_zscored.place_field_shifted_original;
+        data{nmethod}{5} = log_odd_compare{nmethod}{5}.common_zscored.spike_train_shifted_original;
 
         for nshuffle = 1:length(log_odd_compare{nmethod})
             log_pval{nmethod}{nshuffle} = log_odd_compare{nmethod}{nshuffle}.pvalue;
@@ -425,19 +439,19 @@ p_val_threshold(1) = 0.2;
 low_threshold = find(ismembertol(p_val_threshold,[0.0501 0.02 0.01 0.005 0.002 0.001],eps) == 1);
 
 shuffle_type = {'spike train shuffle','place field shuffle','place bin shuffle','time bin shuffle','cell id shuffle'}';
-dataset_type = {'original','cell id shuffled dataset','cross experiment shuffled dataset','place field shifted dataset'};
+dataset_type = {'original','cell id shuffled dataset','cross experiment shuffled dataset','place field shifted dataset','spike train shifted dataset'};
 
 Behavioural_epoches = {'PRE','RUN','POST'};
 marker_shape = {'o','^','s'};
 
 
-for nmethod = 1:4
+for nmethod = 1:5
     fig = figure(nmethod)
     fig.Position = [834 116 850 885];
     nfig = 1;
 
     for epoch = 1:3
-        for ndataset = 2:4
+        for ndataset = 2:5
 
             subplot(2,2,nfig)
             y = mean(percent_shuffle_events{nmethod}{epoch}{ndataset}(low_threshold,:),2);
@@ -468,7 +482,7 @@ for nmethod = 1:4
         set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
         nfig = nfig +1;
     end
-    legend([s(2),s(3),s(4)], {dataset_type{2},dataset_type{3},dataset_type{4}},'Location','northwest')
+    legend([s(2),s(3),s(4),s(5)], {dataset_type{2},dataset_type{3},dataset_type{4},dataset_type{5}},'Location','northwest')
     sgtitle(shuffle_type{nmethod})
 
     cd ground_truth_original\Figure
@@ -478,7 +492,7 @@ for nmethod = 1:4
     saveas(gcf,filename)
     cd ..
     cd ..
-    clf
+    close
 end
 %     legend([s(1),s(2),s(3),s(4)], {'spike train circular shift','place field circular shift','place bin circular shift','time bin permutation'},'Position',[0.35 0.2 0.05 0.05])
 %     sgtitle('Multitrack event proportion vs Sequenceness p value')

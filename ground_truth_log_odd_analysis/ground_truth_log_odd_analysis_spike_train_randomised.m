@@ -19,7 +19,7 @@ c = 1;
 current_directory=pwd;
 load subsets_of_cells;
 
-for f = 8
+for f = 1:length(folders)
     cd Tables
     load subsets_of_cells;
     cd ..
@@ -109,7 +109,7 @@ for f = 8
 
     load replayEvents_bayesian_spike_count
     %% spike train circular shift data
-    for shuffle =1:3
+    for shuffle =2
 
 %         bayesian_spike_count = 'replayEvents_bayesian_spike_count';
 
