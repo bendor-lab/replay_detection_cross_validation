@@ -297,11 +297,11 @@ if exist('log_odd_difference_compare_different_randomisation.mat', 'file') ~= 2
                 replay_score_compare1{nmethod}{nshuffle}{epoch} = boot_replay_score;
                 replay_score_compare_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_replay_score,[2.5 97.5],2);
 
-                if nshuffle ~= 1
-                    percent_shuffle_events{nmethod}{epoch}{nshuffle} = boot_percent_shuffle_events;
-                    percent_shuffle_events_CI{nmethod}{epoch}{nshuffle} = prctile(boot_percent_shuffle_events,[2.5 97.5],2);
+                if nshuffle == 2
+                    percent_shuffle_events1{nmethod}{epoch} = boot_percent_shuffle_events;
+                    percent_shuffle_events_CI1{nmethod}{epoch} = prctile(boot_percent_shuffle_events,[2.5 97.5],2);
                 end
-
+                
                 toc
             end
         end
@@ -419,7 +419,6 @@ end
 
 % Inset for false positive rate at p value 0.05 and p value for false
 % positive rate 0.05
-
 fig = figure(3)
 fig.Position = [834 116 575 531];
 count = 1;
@@ -453,7 +452,7 @@ subplot(2,2,2)
 count = 1;
 for nmethod = [5 6]
     for epoch = 2:3
-        [xx index] = min(abs(mean(percent_shuffle_events{nmethod}{epoch}{ndataset},2) - 0.05));
+        [xx index] = min(abs(mean(percent_shuffle_events{nmethod}{epoch},2) - 0.05));
         adjusted_pvalue(count) = p_val_threshold(index);
 
         s(nmethod) = scatter(epoch-1.5,adjusted_pvalue(count),20,marker_shape{epoch},...
@@ -475,15 +474,13 @@ ylim([0 0.05])
 xlim([0 2])
 set(gca,'xtick',[]);
 cd ground_truth_original\Figure
-filename = sprintf('spearman optimisation false positive rate and p value inset (global remapped).pdf')
+filename = sprintf('spearman optimisation false positive rate and p value inset (POST ripple).pdf')
 saveas(gcf,filename)
 filename = sprintf('spearman optimisation false positive rate and p value inset (POST ripple).fig')
 saveas(gcf,filename)
 cd ..
 cd ..
 clf
-
-
 
 
 % Sig proportion and log odd at p value 0.05

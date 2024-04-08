@@ -76,7 +76,7 @@ for f = 1:length(folders)
         clear place_field_shifted_original_probability_ratio place_field_shifted_common_good_probability_ratio
     elseif strcmp(option,'spike_train_shifted')
         data_folders = 'spike_train';
-        load spike_train_shifted_original_probability_ratio
+        load('spike_train_shifted_original_probability_ratio.mat')
         load spike_train_shifted_common_good_probability_ratio
 
         probability_ratio_original = spike_train_shifted_original_probability_ratio;
