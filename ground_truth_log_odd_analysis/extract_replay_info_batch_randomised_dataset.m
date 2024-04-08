@@ -68,6 +68,7 @@ function extract_replay_info_batch_randomised_dataset(folders)
 shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POST place bin circular shift'...
     ,'POST time bin permutation','PRE cell_id_shuffle'};
 
+<<<<<<< HEAD
 % % cross experiment shuffled randomised dataset
 % [log_odd] = extract_ground_truth_info(folders,'cross_experiment_shuffled','linear',shuffles{3},3,2.1)
 % cd ground_truth_original
@@ -78,6 +79,18 @@ shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POS
 % cd ground_truth_original
 % save log_odd_linear_place_bin_circular_shift_cross_experiment_shuffled log_odd
 % cd ..
+=======
+% cross experiment shuffled randomised dataset
+[log_odd] = extract_ground_truth_info(folders,'cross_experiment_shuffled','linear',shuffles{3},3,2.1)
+cd ground_truth_original
+save log_odd_linear_place_bin_circular_shift_cross_experiment_shuffled log_odd
+cd ..
+
+[log_odd] = extract_ground_truth_info(folders,'cross_experiment_shuffled','path',shuffles{3},3,2.1)
+cd ground_truth_original
+save log_odd_path_place_bin_circular_shift_cross_experiment_shuffled log_odd
+cd ..
+>>>>>>> 943db0d7cc69c6f10f834cadc945059eebc495f8
 
 % spike train shifted randomised dataset
 % [log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','linear',shuffles{3},3,2.1)
@@ -85,10 +98,17 @@ shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POS
 % save log_odd_linear_place_bin_circular_shift_spike_train_shifted log_odd
 % cd ..
 
+<<<<<<< HEAD
 % [log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','path',shuffles{3},3,2.1)
 % cd ground_truth_original
 % save log_odd_path_place_bin_circular_shift_spike_train_shifted log_odd
 % cd ..
+=======
+[log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','path',shuffles{3},3,2.1)
+cd ground_truth_original
+save log_odd_path_place_bin_circular_shift_spike_train_shifted log_odd
+cd ..
+>>>>>>> 943db0d7cc69c6f10f834cadc945059eebc495f8
 
 % place field shifted randomised dataset
 % [log_odd] = extract_ground_truth_info(folders,'place_field_shifted','linear',shuffles{3},3,2.1)
