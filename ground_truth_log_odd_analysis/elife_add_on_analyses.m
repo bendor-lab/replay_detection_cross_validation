@@ -15,6 +15,11 @@ ground_truth_log_odd_analysis_spike_train_randomised(folders,0.02,BAYSESIAN_NORM
 % place_fields_BAYESIAN_combined = generate_cross_experiment_cell_id_shuffles(folders);
 % ground_truth_log_odd_analysis_cross_experiment_randomised(folders,0.02,BAYSESIAN_NORMALIZED_ACROSS_TRACKS)
 
+folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
+    'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
+
+spearman_shuffled_data_re_analysis(folders,'spike_train_shifted')
+spearman_shuffled_data_re_analysis(folders,'place_field_shifted')
 %% Extract information and save structures
 clear all
 workingDir = 'P:\ground_truth_replay_analysis\Dropbo_data8';
@@ -26,12 +31,21 @@ calculate_jump_distance(folders,'place_field_shifted')
 % calculate_jump_distance(folders,'spike_train_shifted')
 calculate_jump_distance(folders,'cross_experiment_shuffled')
 
-spearman_shuffled_data_re_analysis(folders,'cross_experiment_shuffled')
+spearman_shuffled_data_re_analysis(folders,'cross_experiment_shuffled');
+spearman_shuffled_data_re_analysis(folders,'spike_train_shifted');
+spearman_shuffled_data_re_analysis(folders,'place_field_shifted');
 
 % shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POST place bin circular shift'...
 %     ,'POST time bin permutation','PRE cell_id_shuffle'};
 
-extract_replay_info_batch_cross_experiment_shuffled(folders)
+
+clear all
+workingDir = 'D:\Dropbo_data8';
+cd(workingDir)
+folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
+    'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
+
+% extract_replay_info_batch_cross_experiment_shuffled(folders)
 extract_replay_info_batch_randomised_dataset(folders)
 
 %% Validating the use of cell-id randomized dataset
@@ -45,6 +59,9 @@ option = 'common';
 
 method = {'spike shuffle','place field shuffle','place shuffle','time shuffle','cell id shuffle'};
 plot_ground_truth_cell_id_shuffle_validation(folders,option,method)
+
+spearman_shuffled_data_re_analysis(folders,'spike_train_shifted');
+spearman_shuffled_data_re_analysis(folders,'place_field_shifted');
 
 %% Plotting log odds difference within each session
 clear all
