@@ -76,7 +76,7 @@ cd ..
 
 [log_odd] = extract_ground_truth_info(folders,'cross_experiment_shuffled','path',shuffles{3},3,2.1)
 cd ground_truth_original
-save log_odd_linear_place_bin_circular_shift_cross_experiment_shuffled log_odd
+save log_odd_path_place_bin_circular_shift_cross_experiment_shuffled log_odd
 cd ..
 
 % spike train shifted randomised dataset
@@ -87,7 +87,7 @@ cd ..
 
 [log_odd] = extract_ground_truth_info(folders,'spike_train_shifted','path',shuffles{3},3,2.1)
 cd ground_truth_original
-save log_odd_linear_place_bin_circular_shift_spike_train_shifted log_odd
+save log_odd_path_place_bin_circular_shift_spike_train_shifted log_odd
 cd ..
 
 % place field shifted randomised dataset
@@ -98,7 +98,7 @@ cd ..
 
 [log_odd] = extract_ground_truth_info(folders,'place_field_shifted','path',shuffles{3},3,2.1)
 cd ground_truth_original
-save log_odd_linear_place_bin_circular_shift_place_field_shifted log_odd
+save log_odd_path_place_bin_circular_shift_place_field_shifted log_odd
 cd ..
 
 

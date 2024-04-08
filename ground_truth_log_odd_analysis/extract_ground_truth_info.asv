@@ -33,7 +33,7 @@ elseif strcmp(option,'cross_experiment_shuffled')
 end
 cd ..
 
-for f = 1:length(folders)
+for f = 2:length(folders)
 
     cd(folders{f})
     parameters = list_of_parameters;
