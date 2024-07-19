@@ -109,7 +109,7 @@ for f = 1:length(folders)
 
     load replayEvents_bayesian_spike_count
     %% spike train circular shift data
-    for shuffle =2
+    for shuffle =1:3
 
 %         bayesian_spike_count = 'replayEvents_bayesian_spike_count';
 

@@ -46,10 +46,10 @@ for nfolder = 1:length(folders) % Get total number of replay events
                 mean_speed_this_session = [mean_speed_this_session replay.speed(event)];
                 peak_ripple_this_session = [peak_ripple_this_session replay.ripple_peak(event)];
             end
-            
-            if replay.speed(event) > 0.5
-                continue
-            end
+
+%             if replay.speed(event) > 0.5
+%                 continue
+%             end
 
             if event_time >= time_range.pre(1) & event_time <= time_range.pre(2) %If PRE
 
@@ -113,6 +113,9 @@ for threshold = 1:4
 
                 event_time = decoded_replay_events1(1).replay_events(event_index(event)).midpoint;
 
+%                 if replay.speed(event_index(event)) > 0.5
+%                     continue
+%                 end
                 if event_time >= time_range.pre(1) & event_time <= time_range.pre(2) %If PRE
 
                     POST_ripple_total_number{nshuffle}(threshold,1) = POST_ripple_total_number{nshuffle}(threshold,1) + 1*number_of_global_remapped_shuffles;
@@ -241,11 +244,30 @@ peak_ripple{2}(find(ismember(peak_ripple{2},ripple_peak{1}{2})==0))=[];
 
 % scatter(ripple_peak{1}{1},mean_speed{1},'MarkerFaceColor','k','MarkerEdgeColor','k',...
 %     'MarkerFaceAlpha',.02,'MarkerEdgeAlpha',.02)
-epoch_index_0_speed = epoch_index;
+POST_ripple_total_number_low_speed=POST_ripple_total_number;
+epoch_index_low_speed = epoch_index;
 for nmethod = 1:4
     for nshuffle = 1:2
         for epoch = 1:3
-            epoch_index_0_speed{nmethod}{nshuffle}{epoch}(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})>0.5)=[];
+            epoch_index_low_speed{nmethod}{nshuffle}{epoch} = find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=1);
+
+
+            POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch) = length(find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<5&...
+                peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) >= ripple_zscore_threshold_LOW(nmethod) ...
+                & peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) <= ripple_zscore_threshold_HIGH(nmethod)));
+        end
+    end
+end
+
+POST_ripple_total_number_low_theta=POST_ripple_total_number;
+epoch_index_low_theta = epoch_index;
+for nmethod = 1:4
+    for nshuffle = 1:2
+        for epoch = 1:3
+            epoch_index_low_theta{nmethod}{nshuffle}{epoch}= find(mean_theta{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=0);
+            POST_ripple_total_number_low_theta{nshuffle}(nmethod,epoch) = length(find(mean_theta{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<1&...
+            peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) >= ripple_zscore_threshold_LOW(nmethod)&...
+            peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) <= ripple_zscore_threshold_HIGH(nmethod)));
         end
     end
 end
@@ -262,16 +284,16 @@ ripple_zscore_threshold_HIGH = [3 5 10 500];
 cd ground_truth_original
 if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
 
-%     load log_odd_difference_multiple_shuffles
-%     % copy wcorr PRE place POST time ripple 3 data
-%     log_odd_difference1{2} = log_odd_difference{3};
-%     log_odd_difference_CI1{2} = log_odd_difference_CI{3};
-%     percent_sig_events1{2} = percent_sig_events{3};
-%     percent_sig_events_CI1{2} = percent_sig_events_CI{3};
-%     percent_multi_events1{2} = percent_multi_events{3};
-%     percent_multi_events_CI1{2} = percent_multi_events_CI{3};
-%     percent_shuffle_events1{2} = percent_shuffle_events{3};
-%     percent_shuffle_events_CI1{2} = percent_shuffle_events_CI{3};
+    %     load log_odd_difference_multiple_shuffles
+    %     % copy wcorr PRE place POST time ripple 3 data
+    %     log_odd_difference1{2} = log_odd_difference{3};
+    %     log_odd_difference_CI1{2} = log_odd_difference_CI{3};
+    %     percent_sig_events1{2} = percent_sig_events{3};
+    %     percent_sig_events_CI1{2} = percent_sig_events_CI{3};
+    %     percent_multi_events1{2} = percent_multi_events{3};
+    %     percent_multi_events_CI1{2} = percent_multi_events_CI{3};
+    %     percent_shuffle_events1{2} = percent_shuffle_events{3};
+    %     percent_shuffle_events_CI1{2} = percent_shuffle_events_CI{3};
 
     for nmethod = [1 2 3 4]
         for epoch = 1:3
@@ -280,10 +302,12 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
                 parfor threshold = 1:length(p_val_threshold)
                     for nboot = 1:1000 % Bootstrapping 1000 timess
                         s = RandStream('mrg32k3a','Seed',nboot); % Set random seed for resampling
-                        
+
                         % Resample canditate events with replacement
-                        resampled_event = datasample(s,epoch_index_0_speed{nmethod}{nshuffle}{epoch},length(epoch_index_0_speed{nmethod}{nshuffle}{epoch}));
-                        
+                        resampled_event = datasample(s,epoch_index_low_speed{nmethod}{nshuffle}{epoch},length(epoch_index_low_speed{nmethod}{nshuffle}{epoch}));
+%                         resampled_event = datasample(s,epoch_index_low_theta{nmethod}{nshuffle}{epoch},length(epoch_index_low_theta{nmethod}{nshuffle}{epoch}));
+
+
                         % Detecting events significant for track 1
                         % Find significant 'WHOLE' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) == 1));
@@ -294,7 +318,7 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
                         % Events from a specific range of ripple power
                         track_1_index = track_1_index(find(ripple_peak{nmethod}{nshuffle}(track_1_index) >= ripple_zscore_threshold_LOW(nmethod) ...
                             & ripple_peak{nmethod}{nshuffle}(track_1_index) <= ripple_zscore_threshold_HIGH(nmethod)));
-                        
+
                         % Detecting events significant for track 2
                         % Find significant 'WHOLE' event
                         this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) == 1));
@@ -305,7 +329,7 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
                         % Events from a specific range of ripple power
                         track_2_index = track_2_index(find(ripple_peak{nmethod}{nshuffle}(track_2_index) >= ripple_zscore_threshold_LOW(nmethod) ...
                             & ripple_peak{nmethod}{nshuffle}(track_2_index) <= ripple_zscore_threshold_HIGH(nmethod)));
-                        
+
 
                         % Calculate mean replay score for all significant
                         % events
@@ -315,25 +339,25 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
                         % both tracks
                         multi_event_number = sum(ismember(track_1_index,track_2_index));
                         multi_event_percent = multi_event_number/(length(track_1_index)+length(track_2_index)-multi_event_number);
-                        
+
                         % Calculate mean z-scored log odds difference for all significant
                         % events (Track 1 - Track 2)
                         boot_log_odd_difference(threshold,nboot) = mean(data{nmethod}{nshuffle}(1,track_1_index)) ...
                             - mean(data{nmethod}{nshuffle}(2,track_2_index));
-                        
+
 
                         boot_percent_multi_events(threshold,nboot) = multi_event_percent;
 
                         % Significant event proportion (minus multitrack event number to avoid double counting)
                         boot_percent_sig_events(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
-                        boot_percent_sig_events_POST_ripple(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/POST_ripple_total_number{nshuffle}(nmethod,epoch);
+                        boot_percent_sig_events_POST_ripple(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch);
 
 
                         if nshuffle == 2
                             % cell id shuffled mean significant event proportion
-%                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
+                            %                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
-                            boot_percent_shuffle_events_POST_ripple(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / POST_ripple_total_number{nshuffle}(nmethod,epoch);
+                            boot_percent_shuffle_events_POST_ripple(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch);
 
                         end
                     end
@@ -388,10 +412,155 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
 
     cd ..
 else
-%     load log_odd_difference_ripple_replay_quality
-load log_odd_difference_ripple_low_speed
+    %     load log_odd_difference_ripple_replay_quality
+    load log_odd_difference_ripple_low_speed
     cd ..
 end
+
+
+
+
+cd ground_truth_original
+if exist('log_odd_difference_ripple_low_theta.mat', 'file') ~= 2
+
+    %     load log_odd_difference_multiple_shuffles
+    %     % copy wcorr PRE place POST time ripple 3 data
+    %     log_odd_difference1{2} = log_odd_difference{3};
+    %     log_odd_difference_CI1{2} = log_odd_difference_CI{3};
+    %     percent_sig_events1{2} = percent_sig_events{3};
+    %     percent_sig_events_CI1{2} = percent_sig_events_CI{3};
+    %     percent_multi_events1{2} = percent_multi_events{3};
+    %     percent_multi_events_CI1{2} = percent_multi_events_CI{3};
+    %     percent_shuffle_events1{2} = percent_shuffle_events{3};
+    %     percent_shuffle_events_CI1{2} = percent_shuffle_events_CI{3};
+
+    for nmethod = [1 2 3 4]
+        for epoch = 1:3
+            for nshuffle = 1:length(log_pval{nmethod})
+                tic
+                parfor threshold = 1:length(p_val_threshold)
+                    for nboot = 1:1000 % Bootstrapping 1000 timess
+                        s = RandStream('mrg32k3a','Seed',nboot); % Set random seed for resampling
+
+                        % Resample canditate events with replacement
+                        %                         resampled_event = datasample(s,epoch_index_0_speed{nmethod}{nshuffle}{epoch},length(epoch_index_0_speed{nmethod}{nshuffle}{epoch}));
+                        resampled_event = datasample(s,epoch_index_low_theta{nmethod}{nshuffle}{epoch},length(epoch_index_low_theta{nmethod}{nshuffle}{epoch}));
+
+
+                        % Detecting events significant for track 1
+                        % Find significant 'WHOLE' event
+                        this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) == 1));
+                        track_1_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)));
+                        % Find significant 'half' event
+                        this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(1,resampled_event) > 1));
+                        track_1_index = [track_1_index this_segment_event(find(log_pval{nmethod}{nshuffle}(1,this_segment_event) <= p_val_threshold(threshold)/2))];% p value divide by two to account for multiple comparision
+                        % Events from a specific range of ripple power
+                        track_1_index = track_1_index(find(ripple_peak{nmethod}{nshuffle}(track_1_index) >= ripple_zscore_threshold_LOW(nmethod) ...
+                            & ripple_peak{nmethod}{nshuffle}(track_1_index) <= ripple_zscore_threshold_HIGH(nmethod)));
+
+                        % Detecting events significant for track 2
+                        % Find significant 'WHOLE' event
+                        this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) == 1));
+                        track_2_index = this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)));
+                        % Find significant 'half' event
+                        this_segment_event = resampled_event(find(segment_id{nmethod}{nshuffle}(2,resampled_event) > 1));
+                        track_2_index = [track_2_index this_segment_event(find(log_pval{nmethod}{nshuffle}(2,this_segment_event) <= p_val_threshold(threshold)/2))];% p value divide by two to account for multiple comparision
+                        % Events from a specific range of ripple power
+                        track_2_index = track_2_index(find(ripple_peak{nmethod}{nshuffle}(track_2_index) >= ripple_zscore_threshold_LOW(nmethod) ...
+                            & ripple_peak{nmethod}{nshuffle}(track_2_index) <= ripple_zscore_threshold_HIGH(nmethod)));
+
+
+                        % Calculate mean replay score for all significant
+                        % events
+                        boot_replay_score(threshold,nboot) = mean([replay_score{nmethod}{nshuffle}(1,track_1_index) replay_score{nmethod}{nshuffle}(2,track_2_index)]);
+
+                        % Calculate percentage of tracks significant for
+                        % both tracks
+                        multi_event_number = sum(ismember(track_1_index,track_2_index));
+                        multi_event_percent = multi_event_number/(length(track_1_index)+length(track_2_index)-multi_event_number);
+
+                        % Calculate mean z-scored log odds difference for all significant
+                        % events (Track 1 - Track 2)
+                        boot_log_odd_difference(threshold,nboot) = mean(data{nmethod}{nshuffle}(1,track_1_index)) ...
+                            - mean(data{nmethod}{nshuffle}(2,track_2_index));
+
+
+                        boot_percent_multi_events(threshold,nboot) = multi_event_percent;
+
+                        % Significant event proportion (minus multitrack event number to avoid double counting)
+                        boot_percent_sig_events(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
+                        boot_percent_sig_events_POST_ripple(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/POST_ripple_total_number_low_theta{nshuffle}(nmethod,epoch);
+
+
+                        if nshuffle == 2
+                            % cell id shuffled mean significant event proportion
+                            %                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
+                            boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
+                            boot_percent_shuffle_events_POST_ripple(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / POST_ripple_total_number_low_theta{nshuffle}(nmethod,epoch);
+
+                        end
+                    end
+                end
+
+                log_odd_difference1{nmethod}{nshuffle}{epoch} = boot_log_odd_difference;
+                log_odd_difference_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_log_odd_difference,[2.5 97.5],2);
+                percent_sig_events1{nmethod}{nshuffle}{epoch} = boot_percent_sig_events;
+                percent_sig_events_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_percent_sig_events,[2.5 97.5],2);
+                percent_sig_events_POST_ripple1{nmethod}{nshuffle}{epoch} = boot_percent_sig_events_POST_ripple;
+                percent_sig_events_POST_ripple_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_percent_sig_events_POST_ripple,[2.5 97.5],2);
+                percent_multi_events1{nmethod}{nshuffle}{epoch} = boot_percent_multi_events;
+                percent_multi_events_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_percent_multi_events,[2.5 97.5],2);
+                replay_score_compare1{nmethod}{nshuffle}{epoch} = boot_replay_score;
+                replay_score_compare_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_replay_score,[2.5 97.5],2);
+
+                if nshuffle == 2
+                    percent_shuffle_events1{nmethod}{epoch} = boot_percent_shuffle_events;
+                    percent_shuffle_events_CI1{nmethod}{epoch} = prctile(boot_percent_shuffle_events,[2.5 97.5],2);
+                    percent_shuffle_events_POST_ripple1{nmethod}{epoch} = boot_percent_shuffle_events_POST_ripple;
+                    percent_shuffle_events_POST_ripple_CI1{nmethod}{epoch} = prctile(boot_percent_shuffle_events_POST_ripple,[2.5 97.5],2);
+
+                end
+                toc
+            end
+        end
+    end
+
+    log_odd_difference = log_odd_difference1;
+    log_odd_difference_CI = log_odd_difference_CI1;
+    percent_sig_events = percent_sig_events1;
+    percent_sig_events_CI = percent_sig_events_CI1;
+    percent_multi_events = percent_multi_events1;
+    percent_multi_events_CI = percent_multi_events_CI1;
+    percent_shuffle_events = percent_shuffle_events1;
+    percent_shuffle_events_CI = percent_shuffle_events_CI1;
+    percent_sig_events_POST_ripple = percent_sig_events_POST_ripple1;
+    percent_sig_events_POST_ripple_CI = percent_sig_events_POST_ripple_CI1;
+    percent_shuffle_events_POST_ripple = percent_shuffle_events_POST_ripple1;
+    percent_shuffle_events_POST_ripple_CI = percent_shuffle_events_POST_ripple_CI1;
+    replay_score_compare = replay_score_compare1;
+    replay_score_compare_CI = replay_score_compare_CI1;
+
+    save log_odd_difference_ripple_low_theta log_odd_difference log_odd_difference_CI percent_sig_events percent_sig_events_CI...
+        percent_multi_events percent_multi_events_CI percent_shuffle_events percent_shuffle_events_CI replay_score_compare replay_score_compare_CI...
+        percent_sig_events_POST_ripple percent_sig_events_POST_ripple_CI percent_shuffle_events_POST_ripple percent_shuffle_events_POST_ripple_CI
+    clear log_odd_difference1 log_odd_difference_CI1 percent_sig_events1 percent_sig_events_CI1 replay_score_compare1 replay_score_compare_CI1...
+        percent_multi_events1 percent_multi_events_CI1 percent_shuffle_events1 percent_shuffle_events_CI1...
+        percent_sig_events_POST_ripple1 percent_sig_events_POST_ripple_CI1 percent_shuffle_events_POST_ripple1 percent_shuffle_events_POST_ripple_CI1
+    clear boot_log_odd_difference boot_percent_sig_events boot_percent_multi_events boot_percent_shuffle_events...
+        boot_percent_shuffle_events_POST_ripple boot_percent_sig_events_POST_ripple boot_replay_score
+
+    cd ..
+else
+    %     load log_odd_difference_ripple_replay_quality
+    load log_odd_difference_ripple_low_theta
+    cd ..
+end
+
+% load('ground_truth_original/log_odd_difference_ripple_low_theta.mat')
+load('ground_truth_original/log_odd_difference_ripple_low_speed.mat')
+% load('ground_truth_original/log_odd_difference_ripple_replay_quality.mat')
+% load('ground_truth_original/log_odd_difference_ripple_effect.mat')
+
 
 p_val_threshold = round(10.^[-3:0.01:log10(0.2)],4);
 p_val_threshold = flip(unique(p_val_threshold));
@@ -438,7 +607,7 @@ for epoch = 2:3
     xticks([-1:1:4])
 
     if epoch == 2
-        xlim([0 3.5])
+        xlim([-1.3 3.5])
         ylim([0 0.81])
     elseif epoch == 3
         xlim([-1.3 2.8])
@@ -454,9 +623,9 @@ end
 legend([p(1),p(2),p(3),p(4)], {ripple_types{1},ripple_types{2},ripple_types{3},ripple_types{4}},'Position',[0.7 0.2 0.05 0.05])
 
 cd ground_truth_original\Figure
-filename = 'wcorr 2 shuffles ripple replay quality log odds comparision CI (POST ripple threshold).pdf'
+filename = 'wcorr 2 shuffles low speed ripple replay quality log odds comparision CI (POST ripple threshold).pdf'
 saveas(gcf,filename)
-filename = 'wcorr 2 shuffles ripple replay quality log odds comparision CI (POST ripple threshold).fig'
+filename = 'wcorr 2 shuffles low speed ripple replay quality log odds comparision CI (POST ripple threshold).fig'
 saveas(gcf,filename)
 cd ..
 cd ..

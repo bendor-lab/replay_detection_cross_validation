@@ -18,8 +18,6 @@ ground_truth_log_odd_analysis_spike_train_randomised(folders,0.02,BAYSESIAN_NORM
 folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
     'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
 
-spearman_shuffled_data_re_analysis(folders,'spike_train_shifted')
-spearman_shuffled_data_re_analysis(folders,'place_field_shifted')
 %% Extract information and save structures
 clear all
 workingDir = 'P:\ground_truth_replay_analysis\Dropbo_data8';
@@ -28,11 +26,15 @@ folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ct
     'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
 
 calculate_jump_distance(folders,'place_field_shifted')
-% calculate_jump_distance(folders,'spike_train_shifted')
+calculate_jump_distance(folders,'spike_train_shifted')
 calculate_jump_distance(folders,'cross_experiment_shuffled')
 
+
+% Re running spearman corr for randomised dataset
+workingDir = 'D:\Dropbo_data8';
 spearman_shuffled_data_re_analysis(folders,'cross_experiment_shuffled');
 spearman_shuffled_data_re_analysis(folders,'spike_train_shifted');
+cd(workingDir)
 spearman_shuffled_data_re_analysis(folders,'place_field_shifted');
 
 % shuffles={'PRE spike_train_circular_shift','PRE place_field_circular_shift','POST place bin circular shift'...
@@ -60,6 +62,7 @@ option = 'common';
 method = {'spike shuffle','place field shuffle','place shuffle','time shuffle','cell id shuffle'};
 plot_ground_truth_cell_id_shuffle_validation(folders,option,method)
 
+%% dual-track vs false positive rates
 clear all
 workingDir = 'P:\ground_truth_replay_analysis\Dropbo_data8';
 option = 'common';
@@ -70,6 +73,20 @@ method = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuffles'
     'spearman median spike','spearman all spikes',...
     'linear 1 shuffle','linear 2 shuffles'};
 plot_ground_truth_compare_multitrack(folders,option,method)
+
+%% Compare Cell ID randomisation vs place field randomisation vs spike train
+% randomisation
+workingDir = 'D:\Dropbo_data8';
+cd(workingDir)
+folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ctrl-15-NoRest-15' 'Q-BLU_Day2_RateRemap' 'Q-BLU_Day3_RateRemap'...
+    'RAT1_2018-10-05_09-42-15' 'RAT4_2019-06-15_10-46-59' 'RAT4_2019-06-19_10-00-07' 'RAT5_2019-06-24_10-43-24' 'RAT5_2019-06-26_10-27-15'};
+option = 'common';
+% method = {'wcorr','spearman','linear'};
+method = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuffles','wcorr 3 shuffles'...
+    'spearman median spike','spearman all spikes',...
+    'linear 1 shuffle','linear 2 shuffles'};
+plot_ground_truth_compare_shuffles_with_different_randomisation(folders,option,method)
+
 %% Plotting log odds difference within each session
 clear all
 % workingDir = 'D:\ground_truth_replay_analysis\Dropbo_data8_normalised_within';
@@ -82,7 +99,6 @@ folders = {'2019-06-20_09-55-42' 'N-BLU_Day7_Ctrl-16x30_no_reexp' 'N-BLU_Day8_Ct
 option = 'common';
 method = {'wcorr 2 shuffles','spearman median spike'};
 plot_ground_truth_across_sessions(folders,option,method)
-
 
 %% Ripple Threshold comparision
 

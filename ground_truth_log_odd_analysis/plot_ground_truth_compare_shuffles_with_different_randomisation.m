@@ -68,7 +68,7 @@ for nmethod = 1:length(method)
         load log_odd_wcorr_place_bin_circular_shift_global_remapped
         log_odd_compare{nmethod}{2} = log_odd;
         load log_odd_wcorr_place_bin_circular_shift_cross_experiment_shuffled
-        log_odd_compare{nmethod}{2} = log_odd;
+        log_odd_compare{nmethod}{3} = log_odd;
         load log_odd_wcorr_place_bin_circular_shift_place_field_shifted
         log_odd_compare{nmethod}{4} = log_odd;
         load log_odd_wcorr_place_bin_circular_shift_spike_train_shifted
@@ -142,7 +142,7 @@ for nmethod = 1:length(method)
         log_odd_compare{nmethod}{2} = log_odd;
         load log_odd_linear_place_bin_circular_shift_cross_experiment_shuffled
         log_odd_compare{nmethod}{3} = log_odd;
-        load log_odd_linear_place_bin_circular_shifts_place_field_shifted
+        load log_odd_linear_place_bin_circular_shift_place_field_shifted
         log_odd_compare{nmethod}{4} = log_odd;
         load log_odd_linear_place_bin_circular_shift_spike_train_shifted
         log_odd_compare{nmethod}{5} = log_odd;
@@ -165,7 +165,7 @@ for nmethod = 1:length(method)
     % Get index for PRE,  RUN, POST
     states = [-1 0 1 2]; % PRE, POST, RUN Track 1, RUN Track 2
     
-    for nshuffle = 1:2
+    for nshuffle = 1:length(log_odd_compare{nmethod})
         for k=1:length(states) % sort track id and behavioral states (pooled from 5 sessions)
             % Find intersect of behavioural state and ripple peak threshold
             state_index = find(log_odd_compare{nmethod}{nshuffle}.behavioural_state==states(k));
@@ -228,12 +228,12 @@ low_threshold = find(ismembertol(p_val_threshold,[0.0501 0.02 0.01 0.005 0.002 0
 cd ground_truth_original
 if exist('log_odd_difference_compare_different_randomisation.mat', 'file') ~= 2
   
-    for nmethod = 5:length(method)
+    for nmethod = 1:length(method)
         for epoch = 1:3
             for nshuffle = 1:length(log_pval{nmethod})
                 tic
                 
-                parfor threshold = 1:length(p_val_threshold)
+                for threshold = 1:length(p_val_threshold)
                     for nboot = 1:1000 % Bootstrapping 1000 times
                         s = RandStream('mrg32k3a','Seed',nboot); % Set random seed for resampling
 
@@ -281,7 +281,7 @@ if exist('log_odd_difference_compare_different_randomisation.mat', 'file') ~= 2
                         % Significant event proportion (minus multitrack event number to avoid double counting)
                         boot_percent_sig_events(threshold,nboot) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
 
-                        if nshuffle == 2
+                        if  nshuffle ~= 1
                             % cell id shuffled mean significant event proportion
                             boot_percent_shuffle_events(threshold,nboot) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
                         end
@@ -298,8 +298,8 @@ if exist('log_odd_difference_compare_different_randomisation.mat', 'file') ~= 2
                 replay_score_compare_CI1{nmethod}{nshuffle}{epoch} = prctile(boot_replay_score,[2.5 97.5],2);
 
                 if nshuffle ~= 1
-                    percent_shuffle_events{nmethod}{epoch}{nshuffle} = boot_percent_shuffle_events;
-                    percent_shuffle_events_CI{nmethod}{epoch}{nshuffle} = prctile(boot_percent_shuffle_events,[2.5 97.5],2);
+                    percent_shuffle_events1{nmethod}{epoch}{nshuffle} = boot_percent_shuffle_events;
+                    percent_shuffle_events_CI1{nmethod}{epoch}{nshuffle} = prctile(boot_percent_shuffle_events,[2.5 97.5],2);
                 end
 
                 toc
@@ -381,7 +381,7 @@ if exist('log_odd_difference_compare_different_randomisation_original.mat', 'fil
                     % Significant event proportion (minus multitrack event number to avoid double counting)
                     boot_percent_sig_events(threshold) = (length(track_1_index)+length(track_2_index)-multi_event_number)/total_number{nshuffle}(epoch);
                     
-                    if nshuffle == 2
+                    if nshuffle ~= 2
                         % cell id shuffled mean significant event proportion
                         boot_percent_shuffle_events(threshold) = ((length(track_1_index)+length(track_2_index))/2) / total_number{nshuffle}(epoch);
                     end
@@ -392,8 +392,8 @@ if exist('log_odd_difference_compare_different_randomisation_original.mat', 'fil
                 percent_multi_events_original{nmethod}{nshuffle}{epoch} = boot_percent_multi_events;
                 replay_score_original{nmethod}{nshuffle}{epoch} = boot_replay_score;
 
-                if nshuffle == 2
-                    percent_shuffle_events_original{nmethod}{epoch} = boot_percent_shuffle_events;
+                if nshuffle ~= 1
+                    percent_shuffle_events_original{nmethod}{epoch}{nshuffle} = boot_percent_shuffle_events;
                 end
                 
                 toc
@@ -792,158 +792,168 @@ method_type = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuf
 colour_line= {[127,205,187]/255,[65,182,196]/255,[34,94,168]/255,[37,52,148]/255,...
     [253,141,60]/255,[254,217,11]/255,...
     [128,0,38]/255,[227,26,28]/255};
-
+randomisation_type = {'original','Cell ID randomisation','cross experiment','place field randomisation','spike train randomisation'};
 
 
 % Inset for false positive rate at p value 0.05 and p value for false
 % positive rate 0.05
-fig = figure
-fig.Position = [834 116 575 531];
-count = 1;
 
-subplot(2,2,1)
-for nmethod = 1:length(method_type)
-    for epoch = 1:3
-        mean_false_positive_rate(count) = mean(percent_shuffle_events{nmethod}{epoch}(low_threshold(1),:),2);
-%         b = prctile(percent_shuffle_events_POST_ripple{nmethod}{epoch}(low_threshold(1),:),[2.5 97.5])
+for nshuffle = [2 4 5]
 
-        s(nmethod) = scatter(epoch-0.5,mean_false_positive_rate(count),20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        hold on
-        m{nmethod} = errorbar(epoch-0.5,mean_false_positive_rate(count),mean_false_positive_rate(count)-percent_shuffle_events_CI{nmethod}{epoch}(low_threshold(1),1),...
-            percent_shuffle_events_CI{nmethod}{epoch}(low_threshold(1),2)-mean_false_positive_rate(count),'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
-        m{nmethod}.Color = colour_line{nmethod};
-%         set(gca,'yscale','log')
-        count = count + 1;
+    fig = figure(nshuffle)
+    fig.Position = [834 116 575 531];
+    count = 1;
+
+    subplot(2,2,1)
+    for nmethod = 1:length(method_type)
+        for epoch = 1:3
+            mean_false_positive_rate(count) = mean(percent_shuffle_events{nmethod}{epoch}{nshuffle}(low_threshold(1),:),2);
+            %         b = prctile(percent_shuffle_events_POST_ripple{nmethod}{epoch}(low_threshold(1),:),[2.5 97.5])
+
+            s(nmethod) = scatter(epoch-0.5,mean_false_positive_rate(count),20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            hold on
+            m{nmethod} = errorbar(epoch-0.5,mean_false_positive_rate(count),mean_false_positive_rate(count)-percent_shuffle_events_CI{nmethod}{epoch}{nshuffle}(low_threshold(1),1),...
+                percent_shuffle_events_CI{nmethod}{epoch}{nshuffle}(low_threshold(1),2)-mean_false_positive_rate(count),'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
+            m{nmethod}.Color = colour_line{nmethod};
+            %         set(gca,'yscale','log')
+            count = count + 1;
+        end
     end
-end
-ylabel('mean false positive rate')
-pbaspect([1 3 1])
-ylim([0 0.2])
-xlim([0 3])
-set(gca,'xtick',[]);
-ax = gca;
-ax.FontSize = 12;
-set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-
-subplot(2,2,2)
-count = 1;
-for nmethod = 1:length(method_type)
-    for epoch = 1:3
-        [xx index] = min(abs(mean(percent_shuffle_events{nmethod}{epoch},2) - 0.05));
-        adjusted_pvalue(count) = p_val_threshold(index);
-
-        s(nmethod) = scatter(epoch-0.5,adjusted_pvalue(count),20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        hold on
-%         m{nmethod} = errorbar(p_val_threshold(low_threshold),y,y-percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,1),...
-%             percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
-%         m{nmethod}.Color = colour_line{nmethod};
-%         set(gca,'yscale','log')
-        count = count + 1;
-    end
-end
-ylabel('Adjusted p value')
-pbaspect([1 3 1])
-ylim([0 0.21])
-xlim([0 3])
-ax = gca;
-ax.FontSize = 12;
-set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-set(gca,'xtick',[]);
-cd ground_truth_original\Figure
-filename = sprintf('all methods in one false positive rate and p value inset (POST ripple).pdf')
-saveas(gcf,filename)
-filename = sprintf('all methods in one false positive rate and p value inset (POST ripple).fig')
-saveas(gcf,filename)
-cd ..
-cd ..
-clf
-
-
-fig = figure(1)
-fig.Position = [834 116 850 885];
-subplot(2,2,1)
-count = 1;
-for nmethod = 1:length(method)
-    for epoch = 1:3
-        x = mean(mean(log_odd_difference{nmethod}{1}{epoch}(low_threshold(1),:),2),2);
-        y = mean(percent_sig_events{nmethod}{1}{epoch}(low_threshold(1),:),2);
-        s(count) = scatter(x,y,20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        %             hold on
-        %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
-        %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
-        %             m{nshuffle}.Color = colour_line{nshuffle};
-        hold on
-        error_x = [log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),1) log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),2)...
-            log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),2) log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),1)]
-        error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1)...
-            percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2)]
-
-        patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
-        text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(low_threshold(1)),mean(percent_shuffle_events{nmethod}{epoch}(low_threshold(1),:)));
-
-        ylabel('Proportion of significant events')
-        hold on
-        xlabel('mean log odd difference')
-        %             title(Behavioural_epoches{epoch})
-        title('Original p value =< 0.05')
-        count = count + 1;
-    end
+    ylabel('mean false positive rate')
+    pbaspect([1 3 1])
+    ylim([0 0.2])
+    xlim([0 3])
+    set(gca,'xtick',[]);
     ax = gca;
     ax.FontSize = 12;
     set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-end
-legend([s(1:24)],...
-    {text{1:24}})
 
-xlim([-1 3])
-ylim([0 0.6])
+    subplot(2,2,2)
+    count = 1;
+    for nmethod = 1:length(method_type)
+        for epoch = 1:3
+            [xx index] = min(abs(mean(percent_shuffle_events{nmethod}{epoch}{nshuffle},2) - 0.05));
+            adjusted_pvalue(count) = p_val_threshold(index);
 
-% Sig proportion and log odd at shuffle-corrected p value 0.05
-subplot(2,2,2)
-count = 1;
-%         tempt = find(mean(percent_multi_events{nmethod}{nshuffle}{epoch},2) <= 0.05);
-for nmethod = 1:length(method)
-    for epoch = 1:3
-        [c index(nmethod)] = min(abs(mean(percent_shuffle_events{nmethod}{epoch},2) - 0.05));
-        %          [c index(nmethod)] = min(abs(mean(percent_multi_events{nmethod}{1}{epoch},2) - 0.05));
-        x = mean(mean(log_odd_difference{nmethod}{1}{epoch}(index(nmethod),:),2),2);
-        y = mean(percent_sig_events{nmethod}{1}{epoch}(index(nmethod),:),2);
-        s(count) = scatter(x,y,20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        %             hold on
-        %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
-        %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
-        %             m{nshuffle}.Color = colour_line{nshuffle};
-        hold on
-        error_x = [log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),1) log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),2)...
-            log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),2) log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),1)]
-        error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1)...
-            percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2)]
-
-        patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
-        text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_shuffle_events{nmethod}{epoch}(index(nmethod),:)));
-%         text{nmethod} = sprintf('%s p =< %.3f (proportion = %.3f)',shuffle_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_multi_events{nmethod}{1}{epoch}(index(nmethod),:)));
-
-        ylabel('Proportion of significant events')
-        hold on
-        xlabel('mean log odd difference')
-        %             title(Behavioural_epoches{epoch})
-        title('Equivalent p value when cell-id shuffled sig proportion = 0.05')
-        count = count + 1;
+            s(nmethod) = scatter(epoch-0.5,adjusted_pvalue(count),20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            hold on
+            %         m{nmethod} = errorbar(p_val_threshold(low_threshold),y,y-percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,1),...
+            %             percent_shuffle_events_POST_ripple_CI{nmethod}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod})
+            %         m{nmethod}.Color = colour_line{nmethod};
+            %         set(gca,'yscale','log')
+            count = count + 1;
+        end
     end
+    ylabel('Adjusted p value')
+    pbaspect([1 3 1])
+    ylim([0 0.21])
+    xlim([0 3])
     ax = gca;
     ax.FontSize = 12;
     set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-end
-%         plot([0 0.1],[0 0.3],'r')
-legend([s(1:24)],...
-    {text{1:24}})
+    set(gca,'xtick',[]);
+    sgtitle(randomisation_type{nshuffle})
 
-xlim([-1 3])
-ylim([0 0.6])
+    cd ground_truth_original\Figure
+    filename = sprintf('all methods in one false positive rate and p value inset (%s).pdf',randomisation_type{nshuffle})
+    saveas(gcf,filename)
+    filename = sprintf('all methods in one false positive rate and p value inset (%s).fig',randomisation_type{nshuffle})
+    saveas(gcf,filename)
+    cd ..
+    cd ..
+    clf
+end
+
+
+for nshuffle = [2 4 5]
+
+    fig = figure(nshuffle)
+    fig.Position = [834 116 850 885];
+    subplot(2,2,1)
+    count = 1;
+    for nmethod = 1:length(method)
+        for epoch = 1:3
+            x = mean(mean(log_odd_difference{nmethod}{1}{epoch}(low_threshold(1),:),2),2);
+            y = mean(percent_sig_events{nmethod}{1}{epoch}(low_threshold(1),:),2);
+            s(count) = scatter(x,y,20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            %             hold on
+            %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
+            %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
+            %             m{nshuffle}.Color = colour_line{nshuffle};
+            hold on
+            error_x = [log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),1) log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),2)...
+                log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),2) log_odd_difference_CI{nmethod}{1}{epoch}(low_threshold(1),1)]
+            error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1)...
+                percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2)]
+
+            patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
+            text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(low_threshold(1)),mean(percent_shuffle_events{nmethod}{epoch}{nshuffle}(low_threshold(1),:)));
+
+            ylabel('Proportion of significant events')
+            hold on
+            xlabel('mean log odd difference')
+            %             title(Behavioural_epoches{epoch})
+            title('Original p value =< 0.05')
+            count = count + 1;
+        end
+        ax = gca;
+        ax.FontSize = 12;
+        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
+    end
+    legend([s(1:24)],...
+        {text{1:24}})
+
+    xlim([-1 3])
+    ylim([0 0.6])
+
+    % Sig proportion and log odd at shuffle-corrected p value 0.05
+    subplot(2,2,2)
+    count = 1;
+    %         tempt = find(mean(percent_multi_events{nmethod}{nshuffle}{epoch},2) <= 0.05);
+    for nmethod = 1:length(method)
+        for epoch = 1:3
+            [c index(nmethod)] = min(abs(mean(percent_shuffle_events{nmethod}{epoch}{nshuffle},2) - 0.05));
+            %          [c index(nmethod)] = min(abs(mean(percent_multi_events{nmethod}{1}{epoch},2) - 0.05));
+            x = mean(mean(log_odd_difference{nmethod}{1}{epoch}(index(nmethod),:),2),2);
+            y = mean(percent_sig_events{nmethod}{1}{epoch}(index(nmethod),:),2);
+            s(count) = scatter(x,y,20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            %             hold on
+            %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
+            %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
+            %             m{nshuffle}.Color = colour_line{nshuffle};
+            hold on
+            error_x = [log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),1) log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),2)...
+                log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),2) log_odd_difference_CI{nmethod}{1}{epoch}(index(nmethod),1)]
+            error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1)...
+                percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2)]
+
+            patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
+            text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_shuffle_events{nmethod}{epoch}{nshuffle}(index(nmethod),:)));
+            %         text{nmethod} = sprintf('%s p =< %.3f (proportion = %.3f)',shuffle_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_multi_events{nmethod}{1}{epoch}(index(nmethod),:)));
+
+            ylabel('Proportion of significant events')
+            hold on
+            xlabel('mean log odd difference')
+            %             title(Behavioural_epoches{epoch})
+            title('Equivalent p value when cell-id shuffled sig proportion = 0.05')
+            count = count + 1;
+        end
+        ax = gca;
+        ax.FontSize = 12;
+        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
+    end
+    %         plot([0 0.1],[0 0.3],'r')
+    legend([s(1:24)],...
+        {text{1:24}})
+
+    xlim([-1 3])
+    ylim([0 0.6])
+    sgtitle(randomisation_type{nshuffle})
+end
 
 cd ground_truth_original\Figure
 filename = sprintf('all methods in one original vs shuffle-corrected p value.pdf')
@@ -970,97 +980,103 @@ method_type = {'wcorr 1 shuffle','wcorr 1 shuffle + jump distance','wcorr 2 shuf
 colour_line= {[127,205,187]/255,[65,182,196]/255,[34,94,168]/255,[37,52,148]/255,...
     [253,141,60]/255,[254,217,11]/255,...
     [128,0,38]/255,[227,26,28]/255};
-fig = figure(1)
-fig.Position = [834 116 850 885];
-subplot(2,2,1)
-count = 1;
-for nmethod = 1:length(method)
-    for epoch = 1:3
-        % shuffle-subtracted mean log odd difference
-        shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch} = prctile(log_odd_difference{nmethod}{1}{epoch} - log_odd_difference{nmethod}{2}{epoch},[2.5 97.5],2);
-        shuffle_subtracted_log_odd_difference{nmethod}{epoch} = mean(log_odd_difference{nmethod}{1}{epoch} - log_odd_difference{nmethod}{2}{epoch},2);
 
-        x_CI = shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch}(low_threshold(1),:);
-        x = shuffle_subtracted_log_odd_difference{nmethod}{epoch}(low_threshold(1),:);
+for nshuffle = [2 4 5]
 
-        y = mean(percent_sig_events{nmethod}{1}{epoch}(low_threshold(1),:),2);
-        s(count) = scatter(x,y,20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        %             hold on
-        %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
-        %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
-        %             m{nshuffle}.Color = colour_line{nshuffle};
-        hold on
-        error_x = [x_CI(1) x_CI(2) x_CI(2) x_CI(1)];
-        error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1)...
-            percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2)]
+    fig = figure(nshuffle)
+%     fig = figure(1)
+    fig.Position = [834 116 850 885];
+    subplot(2,2,1)
+    count = 1;
+    for nmethod = 1:length(method)
+        for epoch = 1:3
+            % shuffle-subtracted mean log odd difference
+            shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch} = prctile(log_odd_difference{nmethod}{1}{epoch} - log_odd_difference{nmethod}{2}{epoch},[2.5 97.5],2);
+            shuffle_subtracted_log_odd_difference{nmethod}{epoch} = mean(log_odd_difference{nmethod}{1}{epoch} - log_odd_difference{nmethod}{2}{epoch},2);
 
-        patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
-        text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(low_threshold(1)),mean(percent_shuffle_events{nmethod}{epoch}(low_threshold(1),:)));
+            x_CI = shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch}(low_threshold(1),:);
+            x = shuffle_subtracted_log_odd_difference{nmethod}{epoch}(low_threshold(1),:);
 
-        ylabel('Proportion of significant events')
-        hold on
-        xlabel('shuffle-subtracted mean log odd difference')
-        %             title(Behavioural_epoches{epoch})
-        title('Original p value =< 0.05')
+            y = mean(percent_sig_events{nmethod}{1}{epoch}(low_threshold(1),:),2);
+            s(count) = scatter(x,y,20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            %             hold on
+            %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
+            %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
+            %             m{nshuffle}.Color = colour_line{nshuffle};
+            hold on
+            error_x = [x_CI(1) x_CI(2) x_CI(2) x_CI(1)];
+            error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),1)...
+                percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2) percent_sig_events_CI{nmethod}{1}{epoch}(low_threshold(1),2)]
 
-        count = count + 1;
+            patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
+            text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(low_threshold(1)),mean(percent_shuffle_events{nmethod}{epoch}{nshuffle}(low_threshold(1),:)));
+
+            ylabel('Proportion of significant events')
+            hold on
+            xlabel('shuffle-subtracted mean log odd difference')
+            %             title(Behavioural_epoches{epoch})
+            title('Original p value =< 0.05')
+
+            count = count + 1;
+        end
+        ax = gca;
+        ax.FontSize = 12;
+        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
     end
-    ax = gca;
-    ax.FontSize = 12;
-    set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-end
-legend([s(1:24)],...
-    {text{1:24}})
+    legend([s(1:24)],...
+        {text{1:24}})
 
-xlim([-1 3])
-ylim([0 0.6])
+    xlim([-1 3])
+    ylim([0 0.6])
 
 
-% Sig proportion and log odd at shuffle-corrected p value 0.05
-subplot(2,2,2)
-count = 1;
-%         tempt = find(mean(percent_multi_events{nmethod}{nshuffle}{epoch},2) <= 0.05);
-for nmethod = 1:length(method)
-    for epoch = 1:3
-        [c index(nmethod)] = min(abs(mean(percent_shuffle_events{nmethod}{epoch},2) - 0.05));
-        %          [c index(nmethod)] = min(abs(mean(percent_multi_events{nmethod}{1}{epoch},2) - 0.05));
-        x_CI = shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch}(index(nmethod),:);
-        x = shuffle_subtracted_log_odd_difference{nmethod}{epoch}(index(nmethod),:);
+    % Sig proportion and log odd at shuffle-corrected p value 0.05
+    subplot(2,2,2)
+    count = 1;
+    %         tempt = find(mean(percent_multi_events{nmethod}{nshuffle}{epoch},2) <= 0.05);
+    for nmethod = 1:length(method)
+        for epoch = 1:3
+            [c index(nmethod)] = min(abs(mean(percent_shuffle_events{nmethod}{epoch}{nshuffle},2) - 0.05));
+            %          [c index(nmethod)] = min(abs(mean(percent_multi_events{nmethod}{1}{epoch},2) - 0.05));
+            x_CI = shuffle_subtracted_log_odd_difference_CI{nmethod}{epoch}(index(nmethod),:);
+            x = shuffle_subtracted_log_odd_difference{nmethod}{epoch}(index(nmethod),:);
 
-        y = mean(percent_sig_events{nmethod}{1}{epoch}(index(nmethod),:),2);
-        s(count) = scatter(x,y,20,marker_shape{epoch},...
-            'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
-        %             hold on
-        %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
-        %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
-        %             m{nshuffle}.Color = colour_line{nshuffle};
-        hold on
-        error_x = [x_CI(1) x_CI(2) x_CI(2) x_CI(1)];
-        error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1)...
-            percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2)]
+            y = mean(percent_sig_events{nmethod}{1}{epoch}(index(nmethod),:),2);
+            s(count) = scatter(x,y,20,marker_shape{epoch},...
+                'MarkerFaceColor',colour_line{nmethod},'MarkerEdgeColor',colour_line{nmethod},'MarkerFaceAlpha','0.5')
+            %             hold on
+            %             m{nshuffle} = errorbar(p_val_threshold(low_threshold),y,y-percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,1),...
+            %                 percent_multi_events_CI{nmethod}{nshuffle}{epoch}(low_threshold,2)-y,'.','MarkerFaceColor',colour_line{nshuffle},'MarkerEdgeColor',colour_line{nshuffle})
+            %             m{nshuffle}.Color = colour_line{nshuffle};
+            hold on
+            error_x = [x_CI(1) x_CI(2) x_CI(2) x_CI(1)];
+            error_y = [percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),1)...
+                percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2) percent_sig_events_CI{nmethod}{1}{epoch}(index(nmethod),2)]
 
-        patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
-        text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_shuffle_events{nmethod}{epoch}(index(nmethod),:)));
-        %         text{nmethod} = sprintf('%s p =< %.3f (proportion = %.3f)',shuffle_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_multi_events{nmethod}{1}{epoch}(index(nmethod),:)));
+            patch(error_x,error_y,colour_line{nmethod},'EdgeColor',colour_line{nmethod},'FaceAlpha','0.2','EdgeAlpha','0.2')
+            text{count} = sprintf('%s p =< %.3f (proportion = %.3f)',method_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_shuffle_events{nmethod}{epoch}{nshuffle}(index(nmethod),:)));
+            %         text{nmethod} = sprintf('%s p =< %.3f (proportion = %.3f)',shuffle_type{nmethod},p_val_threshold(index(nmethod)),mean(percent_multi_events{nmethod}{1}{epoch}(index(nmethod),:)));
 
-        ylabel('Proportion of significant events')
-        hold on
-        xlabel('shuffle-subtracted mean log odd difference')
-        %             title(Behavioural_epoches{epoch})
-        title('Equivalent p value when cell-id shuffled sig proportion = 0.05')
-        count = count + 1;
+            ylabel('Proportion of significant events')
+            hold on
+            xlabel('shuffle-subtracted mean log odd difference')
+            %             title(Behavioural_epoches{epoch})
+            title('Equivalent p value when cell-id shuffled sig proportion = 0.05')
+            count = count + 1;
+        end
+        ax = gca;
+        ax.FontSize = 12;
+        set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
     end
-    ax = gca;
-    ax.FontSize = 12;
-    set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
-end
-%         plot([0 0.1],[0 0.3],'r')
-legend([s(1:24)],...
-    {text{1:24}})
+    %         plot([0 0.1],[0 0.3],'r')
+    legend([s(1:24)],...
+        {text{1:24}})
 
-xlim([-1 3])
-ylim([0 0.6])
+    xlim([-1 3])
+    ylim([0 0.6])
+    sgtitle(randomisation_type{nshuffle})
+end
 
 cd ground_truth_original\Figure
 filename = sprintf('all methods in one (shuffle-corrected) original vs shuffle-corrected p value.pdf')

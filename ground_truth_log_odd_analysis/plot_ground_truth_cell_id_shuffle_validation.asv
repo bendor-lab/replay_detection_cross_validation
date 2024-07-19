@@ -482,7 +482,7 @@ for nmethod = 1:5
         set(gca,'LineWidth',2,'TickLength',[0.025 0.025]);
         nfig = nfig +1;
     end
-    legend([s(2),s(3),s(4),s(5)], {dataset_type{2},dataset_type{3},dataset_type{4},dataset_type{5}},'Location','northwest')
+    legend([s(2),s(4),s(5)], {dataset_type{2},dataset_type{3},dataset_type{4},dataset_type{5}},'Location','northwest')
     sgtitle(shuffle_type{nmethod})
 
     cd ground_truth_original\Figure
