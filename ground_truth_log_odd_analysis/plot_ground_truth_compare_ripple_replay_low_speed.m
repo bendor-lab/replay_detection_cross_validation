@@ -249,12 +249,18 @@ epoch_index_low_speed = epoch_index;
 for nmethod = 1:4
     for nshuffle = 1:2
         for epoch = 1:3
-            epoch_index_low_speed{nmethod}{nshuffle}{epoch} = find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=1);
+            epoch_index_low_speed{nmethod}{nshuffle}{epoch} = epoch_index{nmethod}{nshuffle}{epoch}(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=1);
 
 
-            POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch) = length(find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<1&...
+            POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch) = length(find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=1&...
                 peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) >= ripple_zscore_threshold_LOW(nmethod) ...
                 & peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) <= ripple_zscore_threshold_HIGH(nmethod)));
+
+%             POST_ripple_total_number_low_speed{nshuffle}(nmethod,epoch) = length(find(mean_speed{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=1&...
+%                 ripple_peak{nmethod}{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) >= ripple_zscore_threshold_LOW(nmethod) ...
+%                 & ripple_peak{nmethod}{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) <= ripple_zscore_threshold_HIGH(nmethod)));
+
+            
         end
     end
 end
@@ -264,7 +270,8 @@ epoch_index_low_theta = epoch_index;
 for nmethod = 1:4
     for nshuffle = 1:2
         for epoch = 1:3
-            epoch_index_low_theta{nmethod}{nshuffle}{epoch}= find(mean_theta{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=0);
+            epoch_index_low_theta{nmethod}{nshuffle}{epoch}= epoch_index{nmethod}{nshuffle}{epoch}(mean_theta{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=0);
+
             POST_ripple_total_number_low_theta{nshuffle}(nmethod,epoch) = length(find(mean_theta{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch})<=0&...
             peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) >= ripple_zscore_threshold_LOW(nmethod)&...
             peak_ripple{nshuffle}(epoch_index{nmethod}{nshuffle}{epoch}) <= ripple_zscore_threshold_HIGH(nmethod)));
@@ -329,7 +336,6 @@ if exist('log_odd_difference_ripple_low_speed.mat', 'file') ~= 2
                         % Events from a specific range of ripple power
                         track_2_index = track_2_index(find(ripple_peak{nmethod}{nshuffle}(track_2_index) >= ripple_zscore_threshold_LOW(nmethod) ...
                             & ripple_peak{nmethod}{nshuffle}(track_2_index) <= ripple_zscore_threshold_HIGH(nmethod)));
-
 
                         % Calculate mean replay score for all significant
                         % events
@@ -556,7 +562,7 @@ else
     cd ..
 end
 
-% load('ground_truth_original/log_odd_difference_ripple_low_theta.mat')
+load('ground_truth_original/log_odd_difference_ripple_low_theta.mat')
 load('ground_truth_original/log_odd_difference_ripple_low_speed.mat')
 % load('ground_truth_original/log_odd_difference_ripple_replay_quality.mat')
 % load('ground_truth_original/log_odd_difference_ripple_effect.mat')
@@ -574,7 +580,7 @@ low_threshold = find(ismembertol(p_val_threshold,[0.0501 0.02 0.01 0.005 0.002 0
 size_level = linspace(40,80,length(low_threshold));
 % colour_line= {[50,136,189]/255,[26,152,80]/255,[244,109,67]/255,[213,62,79]/255};
 alpha_level = linspace(0.2,0.7,length(low_threshold));
-fig = figure(3)
+fig = figure
 fig.Position = [834 116 850 700];
 nfig = 1;
 for epoch = 2:3
@@ -608,10 +614,10 @@ for epoch = 2:3
 
     if epoch == 2
         xlim([-1.3 3.5])
-        ylim([0 0.81])
+        ylim([0 0.86])
     elseif epoch == 3
         xlim([-1.3 2.8])
-        ylim([0 0.81])
+        ylim([0 0.86])
     end
     
     title(Behavioural_epoches{epoch});
@@ -623,9 +629,9 @@ end
 legend([p(1),p(2),p(3),p(4)], {ripple_types{1},ripple_types{2},ripple_types{3},ripple_types{4}},'Position',[0.7 0.2 0.05 0.05])
 
 cd ground_truth_original\Figure
-filename = 'wcorr 2 shuffles low speed ripple replay quality log odds comparision CI (POST ripple threshold).pdf'
+filename = 'wcorr 2 shuffles low theta ripple replay quality log odds comparision CI (POST ripple threshold).pdf'
 saveas(gcf,filename)
-filename = 'wcorr 2 shuffles low speed ripple replay quality log odds comparision CI (POST ripple threshold).fig'
+filename = 'wcorr 2 shuffles low theta ripple replay quality log odds comparision CI (POST ripple threshold).fig'
 saveas(gcf,filename)
 cd ..
 cd ..
